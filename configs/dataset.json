@@ -7,7 +7,16 @@
   "min_readings_per_hour": 9,
   "n_segments": 8,
   "n_neighbours": 3,
-  "segments": [],
+  "segments": [
+    "401507",
+    "404554",
+    "400414",
+    "400100",
+    "402287",
+    "413878",
+    "407157",
+    "407176"
+  ],
   "city_name": "San Francisco Bay Area",
   "city_lat": null,
   "city_lon": null,
