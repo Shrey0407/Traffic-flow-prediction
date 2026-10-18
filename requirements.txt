@@ -1,0 +1,15 @@
+# Unpinned on purpose for now. After your first full working run, execute:
+#   pip freeze > requirements.txt
+# so the exact versions you used are recorded (the rubric asks for pinned versions).
+pandas
+numpy
+tables
+pyarrow
+scikit-learn
+xgboost
+holidays
+requests
+matplotlib
+seaborn
+jupyter
+pytest

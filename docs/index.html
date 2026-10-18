@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Traffic Flow Prediction: 2-Hour-Ahead Speed Forecasting</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header>
+  <h1>Traffic Flow Prediction</h1>
+  <p class="subtitle">Forecasting road speeds two hours ahead in the San Francisco Bay Area (PEMS-BAY)</p>
+  <nav>
+    <a href="#question">Question</a>
+    <a href="#data">Data</a>
+    <a href="#preprocessing">Preprocessing</a>
+    <a href="#methods">Methods</a>
+    <a href="#evaluation">Evaluation</a>
+    <a href="#results">Results</a>
+    <a href="#errors">Errors</a>
+    <a href="#limitations">Limitations</a>
+    <a href="#conclusion">Conclusion</a>
+    <a href="#reproduce">Reproduce</a>
+    <a href="#about">About</a>
+  </nav>
+</header>
+
+<main>
+
+  <section id="home">
+    <h2>Summary</h2>
+    <p>Headline result: <span id="headline">loading…</span></p>
+    <p>
+      <a href="https://github.com/YOUR-USERNAME/traffic-flow-prediction">Source repository</a>
+    </p>
+  </section>
+
+  <section id="question">
+    <h2>Research question</h2>
+    <p>Can a model trained on past speeds, weather, and calendar information predict the average
+       speed on road segments two hours ahead, and how much does it beat simple baselines?</p>
+    <ul>
+      <li><strong>Row unit:</strong> one road sensor (segment) at one hour.</li>
+      <li><strong>Target:</strong> average speed on that segment at hour t + 2, in km/h.</li>
+      <li><strong>Prediction time:</strong> hour t, using only information available at t.</li>
+    </ul>
+  </section>
+
+  <section id="data">
+    <h2>Data</h2>
+    <p>Replace this with your own description of the source (PEMS-BAY, Caltrans PeMS via the DCRNN
+       repository), units, and the data-quality findings from Notebook 01.</p>
+    <div id="data-summary"></div>
+  </section>
+
+  <section id="preprocessing">
+    <h2>Preprocessing</h2>
+    <p>Explain unit conversion (mph to km/h), hourly resampling and the 9-of-12 coverage rule,
+       neighbour construction, weather merge, holiday flag, and the leakage rules.
+       Include the split diagram.</p>
+  </section>
+
+  <section id="methods">
+    <h2>Baselines and methods</h2>
+    <p>Persistence and hour-of-week baselines, then each model: objective, assumption, reason.</p>
+  </section>
+
+  <section id="evaluation">
+    <h2>Evaluation</h2>
+    <p>Chronological 60/20/20 split with 2-hour gaps. Tuning used training data only; the
+       test set was used once. Metrics: MAE (primary), RMSE, skill versus persistence,
+       and a daily block bootstrap for the 95% interval.</p>
+  </section>
+
+  <section id="results">
+    <h2>Results</h2>
+    <table id="metrics-table">
+      <thead><tr><th>Model</th><th>Validation MAE</th><th>Test MAE</th><th>Test RMSE</th>
+             <th>Skill vs persistence</th><th>95% CI (test MAE)</th></tr></thead>
+      <tbody></tbody>
+    </table>
+
+    <h3>Interaction 1: Forecast explorer</h3>
+    <div class="controls">
+      <label>Segment <select id="segment-select"></select></label>
+      <label>Date <select id="date-select"></select></label>
+      <label>Model <select id="model-select"></select></label>
+    </div>
+    <canvas id="forecast-chart" height="110"></canvas>
+    <p id="slice-stats"></p>
+  </section>
+
+  <section id="errors">
+    <h2>Errors</h2>
+    <p>Where does the model struggle? The grid shows the error by weekday and hour of the forecast origin.
+       Grey cells have too few observations to trust.</p>
+    <h3>Interaction 2: Error heatmap</h3>
+    <div class="controls">
+      <label>Metric <select id="grid-metric">
+        <option value="mae">MAE (km/h)</option>
+        <option value="skill">Skill vs persistence</option>
+      </select></label>
+      <label>Segment <select id="grid-segment"></select></label>
+      <label>Condition <select id="grid-condition">
+        <option value="all">All hours</option>
+        <option value="rain">Rain only</option>
+        <option value="dry">Dry only</option>
+      </select></label>
+    </div>
+    <div id="error-grid"></div>
+  </section>
+
+  <section id="limitations">
+    <h2>Limitations</h2>
+    <ul>
+      <li>Results describe these segments and this period only.</li>
+      <li>Sensor outages affect both features and target.</li>
+      <li>No incident, roadworks, or event data.</li>
+      <li>Weather is observed at time t, not forecast.</li>
+      <li>Patterns shift across seasons and infrastructure changes.</li>
+      <li>Prediction is association, not causation.</li>
+    </ul>
+  </section>
+
+  <section id="conclusion">
+    <h2>Conclusion</h2>
+    <p>State the answer to the research question and what it does and does not show.</p>
+  </section>
+
+  <section id="reproduce">
+    <h2>Reproduce</h2>
+    <ol>
+      <li>Clone the repository and create the environment (see README).</li>
+      <li>Download the dataset into <code>data/raw/</code> as described in <code>data/raw/SOURCES.md</code>.</li>
+      <li>Run the pipeline in order: build, features and split, train and select, final test, export.</li>
+      <li>Run <code>pytest src/tests</code> to check for leakage.</li>
+    </ol>
+  </section>
+
+  <section id="about">
+    <h2>About</h2>
+    <p>Author: YOUR NAME. AI tool use is documented in <code>AI_USE.md</code>.</p>
+    <p>Citations: PEMS-BAY and the DCRNN paper (Li et al., 2018); Open-Meteo; scikit-learn; XGBoost; Chart.js.</p>
+  </section>
+
+</main>
+
+<footer>
+  <p>Static site hosted on GitHub Pages.</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "dataset_name": "PEMS-BAY",
+  "speed_file": "data/raw/pems-bay.h5",
+  "speed_key": null,
+  "sensor_locations_file": "data/raw/graph_sensor_locations_bay.csv",
+  "min_coverage": 0.95,
+  "min_readings_per_hour": 9,
+  "n_segments": 8,
+  "n_neighbours": 3,
+  "segments": [],
+  "city_name": "San Francisco Bay Area",
+  "city_lat": null,
+  "city_lon": null,
+  "timezone": "America/Los_Angeles",
+  "holiday_country": "US",
+  "holiday_subdiv": "CA"
+}

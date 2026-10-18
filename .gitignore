@@ -1,0 +1,15 @@
+.venv/
+.env
+*.key
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+.DS_Store
+Thumbs.db
+
+# Raw and processed data are regenerated; keep only the notes and placeholders
+data/raw/*
+!data/raw/SOURCES.md
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep

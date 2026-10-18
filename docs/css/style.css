@@ -1,0 +1,107 @@
+:root {
+  --ink: #1b1f24;
+  --muted: #5b6570;
+  --accent: #1f6feb;
+  --bg: #fafbfc;
+  --card: #ffffff;
+  --border: #e3e7ec;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+  line-height: 1.6;
+}
+
+header {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 1.5rem 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+header h1 { margin: 0; font-size: 1.6rem; }
+.subtitle { margin: 0.2rem 0 0.8rem; color: var(--muted); }
+
+nav { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; }
+nav a { color: var(--accent); text-decoration: none; font-size: 0.95rem; }
+nav a:hover { text-decoration: underline; }
+
+main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  margin: 1rem 0;
+  scroll-margin-top: 140px;  /* keeps headings clear of the sticky header */
+}
+
+h2 { margin-top: 0; }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  overflow-x: auto;
+  display: block;
+}
+th, td { border-bottom: 1px solid var(--border); padding: 0.45rem 0.6rem; text-align: left; }
+th { background: #f3f5f8; }
+tr.selected td { font-weight: 600; background: #eef4ff; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  margin: 0.6rem 0 1rem;
+}
+.controls label { display: flex; flex-direction: column; font-size: 0.9rem; color: var(--muted); }
+select {
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  min-width: 10rem;
+}
+
+canvas { max-width: 100%; }
+
+/* Heatmap cells: colour set inline by JavaScript */
+#error-grid { overflow-x: auto; }
+#error-grid table { display: table; }
+#error-grid td {
+  text-align: center;
+  font-size: 0.78rem;
+  min-width: 2.2rem;
+  padding: 0.3rem;
+  color: #111;
+}
+#error-grid td.low-sample { background: #e9ecef !important; color: #6b7280; }
+
+#data-summary dl { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 1rem; margin: 0; }
+#data-summary dt { color: var(--muted); }
+#data-summary dd { margin: 0; }
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.85rem;
+  padding: 2rem 1rem;
+}
+
+@media (max-width: 600px) {
+  header h1 { font-size: 1.3rem; }
+  section { padding: 1rem; }
+}
