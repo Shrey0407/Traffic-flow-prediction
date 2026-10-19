@@ -2,7 +2,8 @@
 
 | Date | Tool | What it was used for | How I checked the output |
 |---|---|---|---|
-| 2026-10-18 | Claude (Anthropic) | Planned the Week 1 schedule; explained METR-LA vs PEMS-BAY; generated the repository scaffold and first-draft pipeline code (`src/`), tests, notebooks and website starter files from the course guide | *Fill in: e.g. ran each script, read the code line by line, ran `pytest src/tests`, compared the output against the guide* |
+| 2026-10-18 | Claude (Anthropic) | Planned the Week 1 schedule; explained METR-LA vs PEMS-BAY; generated the repository scaffold and first-draft pipeline code (`src/`), tests, notebooks and website starter files from the course guide | Ran each script, ran `pytest src/tests` (8 passed), compared outputs with the guide, read the notebook outputs |
+| 2026-10-19 | Claude (Anthropic) | Explained the Notebook 01 Part A checks and gave the code cells; fixed a pandas index-printing error and a string-vs-int sensor id KeyError in A4 | I ran the cells, checked the outputs against expected values (shape, DST gap, zero share, units) and wrote the notes |
 | | | | |
 
 Add one row per use. Be specific about what the tool did and what you did to verify it.
