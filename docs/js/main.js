@@ -38,6 +38,9 @@ async function renderSummary() {
       <dt>Training / validation / test rows</dt><dd>${s.n_train.toLocaleString()} / ${s.n_val.toLocaleString()} / ${s.n_test.toLocaleString()}</dd>
       <dt>Split dates</dt><dd>validation starts ${s.train_end}; test starts ${s.val_end} (${s.test_start} to ${s.test_end})</dd>
     </dl>`;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set("st-seg", s.sensors);
+  set("st-rows", s.rows.toLocaleString());
 }
 
 // ---------- results table ----------
@@ -62,6 +65,9 @@ async function renderMetrics() {
   if (best) {
     document.getElementById("headline").textContent =
       `${best.model} reaches ${fmt(best.test_mae)} km/h test MAE, skill ${fmt(best.skill, 3)} versus persistence.`;
+    document.getElementById("headline-box").hidden = false;
+    const base = rows.find((r) => r.model === "hour_of_week");
+    if (base) document.getElementById("st-base").textContent = fmt(base.test_mae);
   }
 }
 
@@ -94,12 +100,16 @@ function drawForecast() {
     .sort((a, b) => a.t.localeCompare(b.t));
 
   const labels = rows.map((r) => r.t.slice(11, 16));
+  const css = getComputedStyle(document.documentElement);
+  const col = (n) => css.getPropertyValue(n).trim();
+  const muted = col("--muted"), line = col("--line");
+  const base = { tension: 0.3, pointRadius: 0, pointHoverRadius: 5 };
   const data = {
     labels,
     datasets: [
-      { label: "Actual (km/h)", data: rows.map((r) => r.actual), borderWidth: 2, tension: 0.2 },
-      { label: "Predicted (km/h)", data: rows.map((r) => r.pred), borderWidth: 2, borderDash: [6, 4], tension: 0.2 },
-      { label: "Persistence (km/h)", data: rows.map((r) => r.persist), borderWidth: 1, tension: 0.2 },
+      { ...base, label: "Actual (km/h)", data: rows.map((r) => r.actual), borderColor: col("--c-actual"), backgroundColor: col("--c-actual"), borderWidth: 3 },
+      { ...base, label: "Predicted (km/h)", data: rows.map((r) => r.pred), borderColor: col("--c-pred"), backgroundColor: col("--c-pred"), borderWidth: 3, borderDash: [7, 4] },
+      { ...base, label: "Persistence (km/h)", data: rows.map((r) => r.persist), borderColor: col("--c-persist"), backgroundColor: col("--c-persist"), borderWidth: 1.5 },
     ],
   };
 
@@ -110,10 +120,12 @@ function drawForecast() {
     data,
     options: {
       responsive: true,
+      maintainAspectRatio: false,
       interaction: { mode: "index", intersect: false },
+      plugins: { legend: { labels: { color: muted, usePointStyle: true, boxWidth: 8 } } },
       scales: {
-        y: { title: { display: true, text: "Speed (km/h)" } },
-        x: { title: { display: true, text: "Hour the forecast was made (t); values are for t + 2 h" } },
+        y: { title: { display: true, text: "Speed (km/h)", color: muted }, ticks: { color: muted }, grid: { color: line } },
+        x: { title: { display: true, text: "Hour the forecast was made (t); values are for t + 2 h", color: muted }, ticks: { color: muted }, grid: { display: false } },
       },
     },
   });
@@ -147,6 +159,9 @@ function renderGrid() {
   };
   // Per-segment cells hold only a few hours each, so the "enough data" threshold is lower there.
   const minN = seg === "all" ? 20 : 3;
+  const dec = metric === "mae" ? 1 : 2;
+  document.getElementById("lg-lo").textContent = fmt(metric === "mae" ? lo : hi, dec) + (metric === "mae" ? " km/h (low error)" : " (better than persistence)");
+  document.getElementById("lg-hi").textContent = fmt(metric === "mae" ? hi : lo, dec) + (metric === "mae" ? " km/h (high error)" : " (worse)");
 
   let html = "<table><thead><tr><th>Day</th>";
   for (let h = 0; h < 24; h++) html += `<th>${h}</th>`;
@@ -197,9 +212,34 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   } catch (err) {
     console.error(err);
-    document.body.insertAdjacentHTML("afterbegin",
-      `<p style="background:#fee;padding:.5rem">Could not load data: ${err.message}.
-       Run <code>python src/05_export_site.py</code> first and serve the folder with
-       <code>python -m http.server 8000</code> (opening index.html directly will not work).</p>`);
+    const box = document.getElementById("load-error");
+    box.hidden = false;
+    box.innerHTML = `<strong>Results are not available yet.</strong> ${err.message}.
+       Run <code>python src/05_export_site.py</code>, then view the site through a server with
+       <code>python -m http.server 8000</code> from the <code>docs</code> folder
+       (opening index.html directly will not work).`;
   }
+});
+
+// ---------- navigation: mobile menu and active-section highlight ----------
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("menu-btn");
+  const links = document.getElementById("nav-links");
+  btn.addEventListener("click", () => {
+    const open = links.classList.toggle("open");
+    btn.setAttribute("aria-expanded", String(open));
+  });
+  links.addEventListener("click", () => { links.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); });
+
+  const anchors = [...links.querySelectorAll("a")];
+  const byId = new Map(anchors.map((a) => [a.getAttribute("href").slice(1), a]));
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      anchors.forEach((a) => a.classList.remove("active"));
+      const a = byId.get(e.target.id);
+      if (a) { a.classList.add("active"); a.scrollIntoView({ block: "nearest", inline: "center" }); }
+    }
+  }, { rootMargin: "-30% 0px -65% 0px" });
+  document.querySelectorAll("main section").forEach((sec) => io.observe(sec));
 });

@@ -3,139 +3,229 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Traffic Flow Prediction: 2-Hour-Ahead Speed Forecasting</title>
+  <meta name="description" content="Forecasting road speeds two hours ahead on Bay Area freeways (PEMS-BAY) and testing how much a model beats simple baselines.">
+  <title>Traffic Flow Prediction | 2-Hour-Ahead Speed Forecasting</title>
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+  <script src="js/main.js" defer></script>
 </head>
 <body>
 
-<header>
-  <h1>Traffic Flow Prediction</h1>
-  <p class="subtitle">Forecasting road speeds two hours ahead in the San Francisco Bay Area (PEMS-BAY)</p>
-  <nav>
-    <a href="#question">Question</a>
-    <a href="#data">Data</a>
-    <a href="#preprocessing">Preprocessing</a>
-    <a href="#methods">Methods</a>
-    <a href="#evaluation">Evaluation</a>
-    <a href="#results">Results</a>
-    <a href="#errors">Errors</a>
-    <a href="#limitations">Limitations</a>
-    <a href="#conclusion">Conclusion</a>
-    <a href="#reproduce">Reproduce</a>
-    <a href="#about">About</a>
-  </nav>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="topnav" aria-label="Sections">
+  <div class="topnav-inner">
+    <a class="brand" href="#home"><span class="brand-dot"></span>Traffic Flow Prediction</a>
+    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav-links">Menu</button>
+    <div class="links" id="nav-links">
+      <a href="#question">Question</a>
+      <a href="#data">Data</a>
+      <a href="#preprocessing">Preprocessing</a>
+      <a href="#methods">Methods</a>
+      <a href="#evaluation">Evaluation</a>
+      <a href="#results">Results</a>
+      <a href="#errors">Errors</a>
+      <a href="#limitations">Limitations</a>
+      <a href="#conclusion">Conclusion</a>
+      <a href="#reproduce">Reproduce</a>
+      <a href="#about">About</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="home">
+  <div class="wrap">
+    <p class="eyebrow">Machine learning project &middot; PEMS-BAY &middot; San Francisco Bay Area</p>
+    <h1>How fast will traffic move <span class="grad">two hours from now?</span></h1>
+    <p class="lead">A forecasting study on Bay Area freeway sensors. Given recent speeds, weather and the
+       calendar, we predict the average speed on a road segment at hour <em>t + 2</em> and measure honestly how much
+       a model beats two simple baselines.</p>
+
+    <div class="headline" id="headline-box" hidden>
+      <span class="pill">Headline result</span>
+      <span id="headline"></span>
+    </div>
+
+    <div class="stats" id="hero-stats">
+      <div class="stat"><div class="num" id="st-seg">8</div><div class="lbl">road segments</div></div>
+      <div class="stat"><div class="num" id="st-rows">34,752</div><div class="lbl">hourly rows</div></div>
+      <div class="stat"><div class="num" id="st-period">6 mo</div><div class="lbl">Jan &ndash; Jun 2017</div></div>
+      <div class="stat"><div class="num" id="st-base">2.44</div><div class="lbl">km/h MAE to beat<br><small>(hour-of-week baseline, test)</small></div></div>
+    </div>
+
+    <div class="cta">
+      <a class="btn primary" href="#results">See the results</a>
+      <a class="btn" href="#results">Try the forecast explorer</a>
+      <a class="btn ghost" href="https://github.com/Shrey0407/traffic-flow-prediction">Source on GitHub</a>
+    </div>
+  </div>
 </header>
 
-<main>
-
-  <section id="home">
-    <h2>Summary</h2>
-    <p>Headline result: <span id="headline">loading…</span></p>
-    <p>
-      <a href="https://github.com/Shrey0407/traffic-flow-prediction">Source repository</a>
-    </p>
-  </section>
+<main id="main" class="wrap">
 
   <section id="question">
+    <p class="kicker">01</p>
     <h2>Research question</h2>
-    <p>Can a model trained on past speeds, weather, and calendar information predict the average
-       speed on road segments two hours ahead, and how much does it beat simple baselines?</p>
-    <ul>
-      <li><strong>Row unit:</strong> one road sensor (segment) at one hour.</li>
-      <li><strong>Target:</strong> average speed on that segment at hour t + 2, in km/h.</li>
-      <li><strong>Prediction time:</strong> hour t, using only information available at t.</li>
-    </ul>
+    <p class="big">Can a model trained on past speeds, weather and calendar information predict the average speed on
+       road segments two hours ahead, and how much does it beat simple baselines?</p>
+    <div class="cards three">
+      <div class="card"><div class="ico">&#9638;</div><h3>Row unit</h3><p>One road sensor (segment) at one hour.</p></div>
+      <div class="card"><div class="ico">&#9678;</div><h3>Target</h3><p>Average speed on that segment at hour <em>t + 2</em>, in km/h.</p></div>
+      <div class="card"><div class="ico">&#9201;</div><h3>Prediction time</h3><p>Hour <em>t</em>, using only information that is available at <em>t</em>.</p></div>
+    </div>
   </section>
 
   <section id="data">
+    <p class="kicker">02</p>
     <h2>Data</h2>
-    <p>PEMS-BAY, Caltrans PeMS via the DCRNN repository, 8 segments, hourly, Jan-Jun 2017. 0.023% of hours missing 
-      (one outage hour in March, same for all segments). No duplicates. Segment 400100 has a 24 h flat run.</p>
-      <img src="img/hour_dow_heatmap.png" alt="Heatmap of mean speed by weekday and hour; slow at weekday rush hours">
-      <img src="img/missing_by_month.png" alt="Share of missing hours per sensor by month">
-      <img src="img/missing_over_time.png" alt="Daily share of segments with missing speed">
-      <img src="img/speed_boxplot.png" alt="Speed distribution per road segment in km/h">
-    <div id="data-summary"></div>
+    <p>PEMS-BAY: 5-minute speed readings from Caltrans PeMS freeway detectors, distributed with the DCRNN repository.
+       We use 8 segments averaged to hourly values for January to June 2017. Weather comes from Open-Meteo and
+       holidays from the Python <code>holidays</code> package.</p>
+
+    <div class="cards three">
+      <div class="card good"><h3>Almost complete</h3><p>Only 0.023% of hours are missing: the single hour skipped by the March daylight-saving change, the same for every segment.</p></div>
+      <div class="card good"><h3>Clean</h3><p>No duplicate rows. Weather has no gaps. Timestamps are local time, confirmed by the rush-hour pattern below.</p></div>
+      <div class="card warn"><h3>One stuck sensor</h3><p>Segment 400100 repeats the same value for up to 24 hours on a few days (e.g. 20 April and 18 May). Kept, and flagged as a limitation.</p></div>
+    </div>
+
+    <div class="figures">
+      <figure>
+        <img src="img/hour_dow_heatmap.png" alt="Heatmap of mean speed by weekday and hour; slow at weekday rush hours" loading="lazy">
+        <figcaption><strong>Rush hours are visible.</strong> Weekdays slow down at 7&ndash;9 and 16&ndash;18; nights and weekends stay near 107 km/h. This also proves the timestamps are local time.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/speed_boxplot.png" alt="Speed distribution per road segment in km/h" loading="lazy">
+        <figcaption><strong>Free flow near the limit.</strong> Medians sit at 101&ndash;110 km/h; the low outliers are congestion.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/missing_by_month.png" alt="Share of missing hours per sensor by month" loading="lazy">
+        <figcaption><strong>Missing data by month.</strong> Only March shows a bar: the daylight-saving hour.</figcaption>
+      </figure>
+      <figure>
+        <img src="img/missing_over_time.png" alt="Daily share of segments with missing speed" loading="lazy">
+        <figcaption><strong>Missing data by day.</strong> A single small spike on 12 March, otherwise flat at zero.</figcaption>
+      </figure>
+    </div>
+
+    <div id="data-summary" class="summary"></div>
   </section>
 
   <section id="preprocessing">
+    <p class="kicker">03</p>
     <h2>Preprocessing</h2>
-    <p>Explain unit conversion (mph to km/h), hourly resampling and the 9-of-12 coverage rule,
-       neighbour construction, weather merge, holiday flag, and the leakage rules.
-       Include the split diagram.</p>
+    <p>Every step is written so that a forecast made at hour <em>t</em> never uses information from after <em>t</em>.</p>
+    <ol class="steps">
+      <li><strong>Zeros become missing.</strong> The raw file marks outages with 0 mph (0.003% of readings). They are turned into missing values before averaging.</li>
+      <li><strong>mph to km/h.</strong> Speeds are multiplied by 1.609344.</li>
+      <li><strong>Hourly averages.</strong> Twelve 5-minute readings per hour, kept only when at least 9 of 12 exist (the 9-of-12 rule).</li>
+      <li><strong>Neighbours.</strong> Each segment gets the speed of its nearest sensors by latitude/longitude distance. This is distance, not road connectivity.</li>
+      <li><strong>Weather and calendar.</strong> Temperature, humidity and precipitation from Open-Meteo, a holiday flag, hour and weekday.</li>
+      <li><strong>Leakage rules.</strong> Features use only data up to hour <em>t</em>; a test in <code>src/tests</code> checks this.</li>
+    </ol>
   </section>
 
   <section id="methods">
+    <p class="kicker">04</p>
     <h2>Baselines and methods</h2>
-    <p>Persistence and hour-of-week baselines, then each model: objective, assumption, reason.</p>
+    <div class="cards two">
+      <div class="card"><h3>Persistence</h3><p>&ldquo;Speed in two hours equals speed now.&rdquo; The simplest forecast and the one any model must beat.</p></div>
+      <div class="card"><h3>Hour-of-week mean</h3><p>The average speed for this weekday and hour in the training data. It captures the weekly rhythm with no learning.</p></div>
+    </div>
+    <p class="note">The trained models are added here once the final comparison has been run (see Results).</p>
   </section>
 
   <section id="evaluation">
+    <p class="kicker">05</p>
     <h2>Evaluation</h2>
-    <p>Chronological 60/20/20 split with 2-hour gaps. Tuning used training data only; the
-       test set was used once. Metrics: MAE (primary), RMSE, skill versus persistence,
-       and a daily block bootstrap for the 95% interval.</p>
-  </section>
-
-  <section id="results">
-    <h2>Results</h2>
-    <table id="metrics-table">
-      <thead><tr><th>Model</th><th>Validation MAE</th><th>Test MAE</th><th>Test RMSE</th>
-             <th>Skill vs persistence</th><th>95% CI (test MAE)</th></tr></thead>
-      <tbody></tbody>
-    </table>
-
-    <h3>Interaction 1: Forecast explorer</h3>
-    <div class="controls">
-      <label>Segment <select id="segment-select"></select></label>
-      <label>Date <select id="date-select"></select></label>
-      <label>Model <select id="model-select"></select></label>
+    <div class="split-diagram" aria-label="Chronological split">
+      <div class="seg train"><span>Train 60%</span></div>
+      <div class="gap" title="2-hour gap"></div>
+      <div class="seg val"><span>Validation 20%</span></div>
+      <div class="gap" title="2-hour gap"></div>
+      <div class="seg test"><span>Test 20%</span></div>
     </div>
-    <canvas id="forecast-chart" height="110"></canvas>
-    <p id="slice-stats"></p>
-  </section>
-
-  <section id="errors">
-    <h2>Errors</h2>
-    <p>Where does the model struggle? The grid shows the error by weekday and hour of the forecast origin.
-       Grey cells have too few observations to trust.</p>
-    <h3>Interaction 2: Error heatmap</h3>
-    <div class="controls">
-      <label>Metric <select id="grid-metric">
-        <option value="mae">MAE (km/h)</option>
-        <option value="skill">Skill vs persistence</option>
-      </select></label>
-      <label>Segment <select id="grid-segment"></select></label>
-      <label>Condition <select id="grid-condition">
-        <option value="all">All hours</option>
-        <option value="rain">Rain only</option>
-        <option value="dry">Dry only</option>
-      </select></label>
-    </div>
-    <div id="error-grid"></div>
-  </section>
-
-  <section id="limitations">
-    <h2>Limitations</h2>
-    <ul>
-      <li>Results describe these segments and this period only.</li>
-      <li>Sensor outages affect both features and target.</li>
-      <li>No incident, roadworks, or event data.</li>
-      <li>Weather is observed at time t, not forecast.</li>
-      <li>Patterns shift across seasons and infrastructure changes.</li>
-      <li>Prediction is association, not causation.</li>
+    <p class="small">Chronological split with 2-hour gaps so a target never overlaps the next block.</p>
+    <ul class="ticks">
+      <li>Tuning used training data only. The test set was used once.</li>
+      <li><strong>MAE</strong> (km/h) is the primary metric; RMSE is also reported.</li>
+      <li><strong>Skill</strong> = 1 &minus; MAE / MAE of persistence. Above 0 means better than persistence.</li>
+      <li>A daily block bootstrap gives a 95% interval for the test MAE.</li>
     </ul>
   </section>
 
+  <section id="results">
+    <p class="kicker">06</p>
+    <h2>Results</h2>
+    <div id="load-error" class="notice" hidden></div>
+
+    <div class="table-wrap">
+      <table id="metrics-table">
+        <thead><tr><th>Model</th><th>Validation MAE</th><th>Test MAE</th><th>Test RMSE</th>
+               <th>Skill vs persistence</th><th>95% CI (test MAE)</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="small">MAE and RMSE in km/h; lower is better. The highlighted row is the model chosen on validation data.</p>
+
+    <h3>Interaction 1: Forecast explorer</h3>
+    <p class="small">Pick a segment, a day and a model. The chart compares the real speed with the forecast made two hours earlier.</p>
+    <div class="panel">
+      <div class="controls">
+        <label>Segment <select id="segment-select"></select></label>
+        <label>Date <select id="date-select"></select></label>
+        <label>Model <select id="model-select"></select></label>
+      </div>
+      <div class="chart-box"><canvas id="forecast-chart"></canvas></div>
+      <p id="slice-stats" class="stats-line"></p>
+    </div>
+  </section>
+
+  <section id="errors">
+    <p class="kicker">07</p>
+    <h2>Errors</h2>
+    <p>Where does the model struggle? The grid shows the error by weekday and hour of the forecast origin.
+       Hatched cells have too few observations to trust.</p>
+    <h3>Interaction 2: Error heatmap</h3>
+    <div class="panel">
+      <div class="controls">
+        <label>Metric <select id="grid-metric">
+          <option value="mae">MAE (km/h)</option>
+          <option value="skill">Skill vs persistence</option>
+        </select></label>
+        <label>Segment <select id="grid-segment"></select></label>
+        <label>Condition <select id="grid-condition">
+          <option value="all">All hours</option>
+          <option value="rain">Rain only</option>
+          <option value="dry">Dry only</option>
+        </select></label>
+      </div>
+      <div id="error-grid" class="grid-wrap"></div>
+      <div class="legend" id="grid-legend"><span id="lg-lo">low</span><i></i><span id="lg-hi">high</span></div>
+    </div>
+  </section>
+
+  <section id="limitations">
+    <p class="kicker">08</p>
+    <h2>Limitations</h2>
+    <div class="cards two">
+      <div class="card warn"><h3>Scope</h3><p>Results describe these 8 segments and this half-year only.</p></div>
+      <div class="card warn"><h3>Sensor outages</h3><p>They affect both features and target. Segment 400100 has frozen stretches.</p></div>
+      <div class="card warn"><h3>Missing information</h3><p>No incident, roadworks or event data. Weather is observed at time <em>t</em>, not forecast.</p></div>
+      <div class="card warn"><h3>Association, not causation</h3><p>Patterns shift across seasons and infrastructure changes. Neighbours are by distance, not road connectivity.</p></div>
+    </div>
+  </section>
+
   <section id="conclusion">
+    <p class="kicker">09</p>
     <h2>Conclusion</h2>
-    <p>State the answer to the research question and what it does and does not show.</p>
+    <p class="note">To be written after the final test run: the answer to the research question, and what it does and does not show.</p>
   </section>
 
   <section id="reproduce">
+    <p class="kicker">10</p>
     <h2>Reproduce</h2>
-    <ol>
-      <li>Clone the repository and create the environment (see README).</li>
+    <ol class="steps">
+      <li>Clone the repository and create the environment (see the README).</li>
       <li>Download the dataset into <code>data/raw/</code> as described in <code>data/raw/SOURCES.md</code>.</li>
       <li>Run the pipeline in order: build, features and split, train and select, final test, export.</li>
       <li>Run <code>pytest src/tests</code> to check for leakage.</li>
@@ -143,17 +233,19 @@
   </section>
 
   <section id="about">
+    <p class="kicker">11</p>
     <h2>About</h2>
-    <p>Author: YOUR NAME. AI tool use is documented in <code>AI_USE.md</code>.</p>
-    <p>Citations: PEMS-BAY and the DCRNN paper (Li et al., 2018); Open-Meteo; scikit-learn; XGBoost; Chart.js.</p>
+    <p>Author: Shrey Mevawala. AI tool use is documented in <code>AI_USE.md</code>.</p>
+    <p class="small">Citations: PEMS-BAY and the DCRNN paper (Li et al., 2018); Open-Meteo; scikit-learn; XGBoost; Chart.js.</p>
   </section>
 
 </main>
 
 <footer>
-  <p>Static site hosted on GitHub Pages.</p>
+  <div class="wrap">
+    <p>Static site hosted on GitHub Pages &middot; <a href="https://github.com/Shrey0407/traffic-flow-prediction">Source repository</a> &middot; <a href="#home">Back to top</a></p>
+  </div>
 </footer>
-
 
 </body>
 </html>
