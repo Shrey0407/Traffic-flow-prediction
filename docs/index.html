@@ -1,251 +1,546 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Forecasting road speeds two hours ahead on Bay Area freeways (PEMS-BAY) and testing how much a model beats simple baselines.">
-  <title>Traffic Flow Prediction | 2-Hour-Ahead Speed Forecasting</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
-  <script src="js/main.js" defer></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Forecasting average road speed two hours ahead on Bay Area freeway segments (PEMS-BAY), compared against persistence and hour-of-week baselines.">
+<title>Predicting Road Speed 2 Hours Ahead</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" defer></script>
+<style>
+:root {
+  --paper: #faf9f6;
+  --ink: #1c1c1c;
+  --muted: #666660;
+  --rule: #cfcdc6;
+  --tint: #efede8;
+  --accent: #1d4ed8;
+  --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --mono: "SF Mono", SFMono-Regular, ui-monospace, Menlo, Consolas, "Courier New", monospace;
+}
+* { box-sizing: border-box; border-radius: 0; box-shadow: none; }
+html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 17px/1.7 var(--sans); }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:hover { text-decoration-thickness: 2px; }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+code, pre, .mono, th, .label, figcaption .tag { font-family: var(--mono); }
+code { font-size: .86em; background: var(--tint); padding: .1em .35em; border-radius: 2px; }
+pre { background: var(--tint); border: 1px solid var(--rule); border-radius: 2px; padding: 14px 16px; overflow-x: auto; font-size: .82rem; line-height: 1.6; margin: 16px 0; }
+pre code { background: none; padding: 0; }
+.page { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+/* masthead */
+.masthead { border-bottom: 1px solid var(--ink); padding: 64px 0 40px; }
+.label { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+h1 { font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1; font-weight: 600; letter-spacing: -.02em; margin: 14px 0 18px; max-width: 16em; }
+.deck { font-size: 1.2rem; color: var(--muted); max-width: 40em; margin: 0 0 28px; }
+.headline { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); padding: 14px 0; margin: 0 0 20px; display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: baseline; }
+.headline .mono { font-size: .95rem; }
+.toc { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 24px 0 0; padding: 0; list-style: none; font-family: var(--mono); font-size: .8rem; }
+.toc a { color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--rule); }
+.toc a:hover { color: var(--accent); border-color: var(--accent); }
+
+/* sections: number in the margin, text in the measure */
+section { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 0 32px; padding: 44px 0; border-bottom: 1px solid var(--rule); }
+.sec-head { font-family: var(--mono); font-size: .78rem; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding-top: .45rem; }
+.sec-head b { display: block; color: var(--ink); font-weight: 400; font-size: .78rem; }
+.body { min-width: 0; max-width: 46rem; }
+.body.wide { max-width: none; }
+h2.t { font-size: 1.7rem; line-height: 1.2; font-weight: 600; letter-spacing: -.01em; margin: 0 0 14px; }
+h3 { font-size: 1rem; margin: 30px 0 6px; font-weight: 700; }
+p { margin: 0 0 14px; }
+ul, ol { padding-left: 1.2em; margin: 0 0 14px; }
+li { margin: 4px 0; }
+.small { font-size: .88rem; color: var(--muted); }
+.todo { border: 1px solid var(--rule); border-left: 3px solid var(--ink); background: var(--tint); padding: 10px 14px; font-size: .92rem; border-radius: 2px; }
+
+/* definition rows */
+dl.facts { display: grid; grid-template-columns: 11rem 1fr; margin: 18px 0; border-top: 1px solid var(--rule); }
+dl.facts dt, dl.facts dd { margin: 0; padding: 9px 0; border-bottom: 1px solid var(--rule); }
+dl.facts dt { font-family: var(--mono); font-size: .8rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding-top: 12px; }
+
+/* figures */
+.figs { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 22px 0; }
+figure { margin: 0; }
+figure img { width: 100%; height: auto; display: block; border: 1px solid var(--rule); background: #fff; }
+figcaption { font-size: .85rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+figcaption .tag { color: var(--ink); font-size: .75rem; text-transform: uppercase; letter-spacing: .05em; display: block; }
+
+/* tables */
+.tablewrap { overflow-x: auto; margin: 16px 0 8px; }
+table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+th, td { padding: 9px 14px 9px 0; text-align: right; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 400; border-bottom: 1px solid var(--ink); }
+th:first-child, td:first-child { text-align: left; }
+td { font-family: var(--mono); }
+td:first-child { font-family: var(--sans); }
+tr.selected td { font-weight: 700; background: var(--tint); }
+tr.pending td { color: var(--muted); }
+
+/* split diagram */
+.split { display: flex; height: 44px; border: 1px solid var(--ink); margin: 18px 0 6px; font-family: var(--mono); font-size: .75rem; }
+.split div { display: grid; place-items: center; }
+.split .train { flex: 60; background: var(--ink); color: var(--paper); }
+.split .val { flex: 20; background: #8c8a82; color: var(--paper); }
+.split .test { flex: 20; background: var(--paper); color: var(--ink); }
+.split .gap { flex: 0 0 10px; background: var(--paper); border-left: 1px solid var(--ink); border-right: 1px solid var(--ink); }
+
+/* interactions */
+.controls { display: flex; flex-wrap: wrap; gap: 14px 20px; margin: 14px 0; }
+.controls label { display: flex; flex-direction: column; gap: 4px; font-family: var(--mono); font-size: .72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+select { font: .9rem var(--mono); text-transform: none; letter-spacing: 0; color: var(--ink); background: var(--paper); border: 1px solid var(--ink); border-radius: 2px; padding: 7px 10px; min-width: 150px; }
+.chartbox { position: relative; height: 340px; border: 1px solid var(--rule); background: #fff; padding: 10px; margin-top: 4px; }
+#slice-stats { font-family: var(--mono); font-size: .82rem; margin: 10px 0 0; }
+#error-grid { overflow-x: auto; }
+#error-grid table { border-collapse: separate; border-spacing: 2px; font-size: .68rem; min-width: 720px; }
+#error-grid th { padding: 2px 3px; text-align: center; border: 0; color: var(--muted); }
+#error-grid td { padding: 7px 0; text-align: center; border: 0; border-radius: 2px; color: var(--ink); }
+#error-grid td.low-sample { background: var(--paper); outline: 1px dashed var(--rule); outline-offset: -2px; color: transparent; }
+.legend { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: .72rem; color: var(--muted); margin-top: 10px; }
+.legend i { display: flex; width: 150px; height: 10px; border: 1px solid var(--ink); }
+.legend i b { flex: 1; }
+.notice { border: 1px solid var(--ink); padding: 10px 14px; margin-bottom: 14px; font-size: .9rem; border-radius: 2px; }
+
+.cases { counter-reset: c; list-style: none; padding: 0; border-top: 1px solid var(--rule); }
+.cases li { counter-increment: c; padding: 12px 0 12px 44px; border-bottom: 1px solid var(--rule); position: relative; margin: 0; }
+.cases li::before { content: counter(c, decimal-leading-zero); position: absolute; left: 0; font-family: var(--mono); font-size: .8rem; color: var(--muted); top: 15px; }
+
+footer { padding: 28px 0 56px; font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+
+@media (max-width: 820px) {
+  body { font-size: 16px; }
+  section { grid-template-columns: 1fr; padding: 32px 0; }
+  .sec-head { padding: 0 0 6px; }
+  .sec-head b { display: inline; margin-right: 8px; }
+  .figs { grid-template-columns: 1fr; }
+  .headline { grid-template-columns: 1fr; gap: 2px; }
+  dl.facts { grid-template-columns: 1fr; }
+  dl.facts dt { border-bottom: 0; padding-bottom: 0; }
+  .masthead { padding-top: 36px; }
+}
+</style>
 </head>
 <body>
+<div class="page">
 
-<a class="skip" href="#main">Skip to content</a>
+<header class="masthead" id="summary">
+  <div class="label">Machine learning project &middot; PEMS-BAY &middot; San Francisco Bay Area</div>
+  <h1>Predicting Road Speed 2 Hours Ahead</h1>
+  <p class="deck">Given recent speeds, weather and the calendar, how well can a model forecast the average speed of a
+     freeway segment at hour <em>t&nbsp;+&nbsp;2</em>, and by how much does it improve on two simple baselines?</p>
 
-<nav class="topnav" aria-label="Sections">
-  <div class="topnav-inner">
-    <a class="brand" href="#home"><span class="brand-dot"></span>Traffic Flow Prediction</a>
-    <button class="menu-btn" id="menu-btn" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <div class="links" id="nav-links">
-      <a href="#question">Question</a>
-      <a href="#data">Data</a>
-      <a href="#preprocessing">Preprocessing</a>
-      <a href="#methods">Methods</a>
-      <a href="#evaluation">Evaluation</a>
-      <a href="#results">Results</a>
-      <a href="#errors">Errors</a>
-      <a href="#limitations">Limitations</a>
-      <a href="#conclusion">Conclusion</a>
-      <a href="#reproduce">Reproduce</a>
-      <a href="#about">About</a>
-    </div>
+  <div class="headline">
+    <span class="label">Headline result</span>
+    <span class="mono" id="headline">Hour-of-week baseline: 2.342 km/h validation MAE, 2.436 km/h test MAE. Trained-model results appear here once the final test run is exported.</span>
   </div>
-</nav>
+  <p><a href="https://github.com/Shrey0407/traffic-flow-prediction">Source repository on GitHub</a></p>
 
-<header class="hero" id="home">
-  <div class="wrap">
-    <p class="eyebrow">Machine learning project &middot; PEMS-BAY &middot; San Francisco Bay Area</p>
-    <h1>How fast will traffic move <span class="grad">two hours from now?</span></h1>
-    <p class="lead">A forecasting study on Bay Area freeway sensors. Given recent speeds, weather and the
-       calendar, we predict the average speed on a road segment at hour <em>t + 2</em> and measure honestly how much
-       a model beats two simple baselines.</p>
-
-    <div class="headline" id="headline-box" hidden>
-      <span class="pill">Headline result</span>
-      <span id="headline"></span>
-    </div>
-
-    <div class="stats" id="hero-stats">
-      <div class="stat"><div class="num" id="st-seg">8</div><div class="lbl">road segments</div></div>
-      <div class="stat"><div class="num" id="st-rows">34,752</div><div class="lbl">hourly rows</div></div>
-      <div class="stat"><div class="num" id="st-period">6 mo</div><div class="lbl">Jan &ndash; Jun 2017</div></div>
-      <div class="stat"><div class="num" id="st-base">2.44</div><div class="lbl">km/h MAE to beat<br><small>(hour-of-week baseline, test)</small></div></div>
-    </div>
-
-    <div class="cta">
-      <a class="btn primary" href="#results">See the results</a>
-      <a class="btn" href="#results">Try the forecast explorer</a>
-      <a class="btn ghost" href="https://github.com/Shrey0407/traffic-flow-prediction">Source on GitHub</a>
-    </div>
-  </div>
+  <ol class="toc" aria-label="Contents">
+    <li><a href="#question">02 Question</a></li>
+    <li><a href="#data">03 Data</a></li>
+    <li><a href="#preprocessing">04 Preprocessing</a></li>
+    <li><a href="#methods">05 Methods</a></li>
+    <li><a href="#evaluation">06 Evaluation</a></li>
+    <li><a href="#results">07 Results</a></li>
+    <li><a href="#errors">08 Errors</a></li>
+    <li><a href="#limitations">09 Limitations</a></li>
+    <li><a href="#conclusion">10 Conclusion</a></li>
+    <li><a href="#reproduce">11 Reproduce</a></li>
+    <li><a href="#about">12 About</a></li>
+  </ol>
 </header>
 
-<main id="main" class="wrap">
+<main>
 
-  <section id="question">
-    <p class="kicker">01</p>
-    <h2>Research question</h2>
-    <p class="big">Can a model trained on past speeds, weather and calendar information predict the average speed on
-       road segments two hours ahead, and how much does it beat simple baselines?</p>
-    <div class="cards three">
-      <div class="card"><div class="ico">&#9638;</div><h3>Row unit</h3><p>One road sensor (segment) at one hour.</p></div>
-      <div class="card"><div class="ico">&#9678;</div><h3>Target</h3><p>Average speed on that segment at hour <em>t + 2</em>, in km/h.</p></div>
-      <div class="card"><div class="ico">&#9201;</div><h3>Prediction time</h3><p>Hour <em>t</em>, using only information that is available at <em>t</em>.</p></div>
+<section id="question">
+  <div class="sec-head"><b>02</b>Research question</div>
+  <div class="body">
+    <h2 class="t">What is being predicted, and why</h2>
+    <p>Drivers, freight operators and traffic managers plan around conditions that will exist later, not the ones they see now.
+       This project asks whether a model that sees only information available at hour <em>t</em> can predict the average
+       speed on a road segment at hour <em>t&nbsp;+&nbsp;2</em> more accurately than the two forecasts that need no learning.</p>
+    <dl class="facts">
+      <dt>Row unit</dt><dd>One road sensor (segment) at one hour.</dd>
+      <dt>Target</dt><dd>Average speed on that segment at <em>t&nbsp;+&nbsp;2</em>, in km/h.</dd>
+      <dt>Information</dt><dd>Recent speeds of the segment and its nearest neighbours, weather, holiday flag, hour and weekday, all known at <em>t</em>.</dd>
+      <dt>Primary metric</dt><dd>Mean absolute error (MAE) in km/h; lower is better.</dd>
+    </dl>
+  </div>
+</section>
+
+<section id="data">
+  <div class="sec-head"><b>03</b>Data</div>
+  <div class="body wide">
+    <h2 class="t">PEMS-BAY freeway detectors</h2>
+    <div class="body">
+      <p>The speed table comes from Caltrans PeMS Bay Area detectors, distributed with the DCRNN repository: <span class="mono">325 sensors</span>,
+         <span class="mono">5-minute</span> readings, <span class="mono">January to June 2017</span>, in miles per hour. This study uses 8 segments chosen
+         for coverage and explainability and fixed before any modelling. Weather is from Open-Meteo and holidays from the Python
+         <code>holidays</code> package.</p>
+      <p>Quality checks found the data nearly complete. Missing readings are stored as zero (0.003% of all values) and are treated as
+         missing. Of the hourly rows, 0.023% are absent: the single hour skipped by the March daylight-saving change, identical for all segments.
+         There are no duplicate rows and no missing weather values.</p>
     </div>
-  </section>
-
-  <section id="data">
-    <p class="kicker">02</p>
-    <h2>Data</h2>
-    <p>PEMS-BAY: 5-minute speed readings from Caltrans PeMS freeway detectors, distributed with the DCRNN repository.
-       We use 8 segments averaged to hourly values for January to June 2017. Weather comes from Open-Meteo and
-       holidays from the Python <code>holidays</code> package.</p>
-
-    <div class="cards three">
-      <div class="card good"><h3>Almost complete</h3><p>Only 0.023% of hours are missing: the single hour skipped by the March daylight-saving change, the same for every segment.</p></div>
-      <div class="card good"><h3>Clean</h3><p>No duplicate rows. Weather has no gaps. Timestamps are local time, confirmed by the rush-hour pattern below.</p></div>
-      <div class="card warn"><h3>One stuck sensor</h3><p>Segment 400100 repeats the same value for up to 24 hours on a few days (e.g. 20 April and 18 May). Kept, and flagged as a limitation.</p></div>
+    <div class="figs">
+      <figure><img src="img/hour_dow_heatmap.png" alt="Heatmap of mean speed by weekday and hour; slow at weekday rush hours" loading="lazy">
+        <figcaption><span class="tag">Fig. 1 Hour by weekday</span>Weekdays slow at 07&ndash;09 and 16&ndash;18; nights and weekends stay near 107 km/h. The pattern confirms timestamps are local time.</figcaption></figure>
+      <figure><img src="img/speed_boxplot.png" alt="Speed distribution per road segment in km/h" loading="lazy">
+        <figcaption><span class="tag">Fig. 2 Speed by segment</span>Medians sit at 101&ndash;110 km/h. The low outliers are congestion.</figcaption></figure>
+      <figure><img src="img/missing_by_month.png" alt="Share of missing hours per sensor by month" loading="lazy">
+        <figcaption><span class="tag">Fig. 3 Missing by month</span>Only March has missing hours: the daylight-saving hour on 12 March.</figcaption></figure>
+      <figure><img src="img/missing_over_time.png" alt="Daily share of segments with missing speed" loading="lazy">
+        <figcaption><span class="tag">Fig. 4 Missing by day</span>One spike on 12 March; every other day is complete.</figcaption></figure>
     </div>
+    <div class="body"><div id="data-summary"></div></div>
+  </div>
+</section>
 
-    <div class="figures">
-      <figure>
-        <img src="img/hour_dow_heatmap.png" alt="Heatmap of mean speed by weekday and hour; slow at weekday rush hours" loading="lazy">
-        <figcaption><strong>Rush hours are visible.</strong> Weekdays slow down at 7&ndash;9 and 16&ndash;18; nights and weekends stay near 107 km/h. This also proves the timestamps are local time.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/speed_boxplot.png" alt="Speed distribution per road segment in km/h" loading="lazy">
-        <figcaption><strong>Free flow near the limit.</strong> Medians sit at 101&ndash;110 km/h; the low outliers are congestion.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/missing_by_month.png" alt="Share of missing hours per sensor by month" loading="lazy">
-        <figcaption><strong>Missing data by month.</strong> Only March shows a bar: the daylight-saving hour.</figcaption>
-      </figure>
-      <figure>
-        <img src="img/missing_over_time.png" alt="Daily share of segments with missing speed" loading="lazy">
-        <figcaption><strong>Missing data by day.</strong> A single small spike on 12 March, otherwise flat at zero.</figcaption>
-      </figure>
-    </div>
-
-    <div id="data-summary" class="summary"></div>
-  </section>
-
-  <section id="preprocessing">
-    <p class="kicker">03</p>
-    <h2>Preprocessing</h2>
-    <p>Every step is written so that a forecast made at hour <em>t</em> never uses information from after <em>t</em>.</p>
-    <ol class="steps">
-      <li><strong>Zeros become missing.</strong> The raw file marks outages with 0 mph (0.003% of readings). They are turned into missing values before averaging.</li>
-      <li><strong>mph to km/h.</strong> Speeds are multiplied by 1.609344.</li>
-      <li><strong>Hourly averages.</strong> Twelve 5-minute readings per hour, kept only when at least 9 of 12 exist (the 9-of-12 rule).</li>
-      <li><strong>Neighbours.</strong> Each segment gets the speed of its nearest sensors by latitude/longitude distance. This is distance, not road connectivity.</li>
-      <li><strong>Weather and calendar.</strong> Temperature, humidity and precipitation from Open-Meteo, a holiday flag, hour and weekday.</li>
-      <li><strong>Leakage rules.</strong> Features use only data up to hour <em>t</em>; a test in <code>src/tests</code> checks this.</li>
+<section id="preprocessing">
+  <div class="sec-head"><b>04</b>Preprocessing</div>
+  <div class="body">
+    <h2 class="t">From raw readings to a modelling table</h2>
+    <ol>
+      <li><strong>Zeros to missing.</strong> A zero speed marks a failed reading, not a standstill. At one moment (2017-06-15 01:00) 67% of sensors read zero together, which is a feed outage.</li>
+      <li><strong>Units.</strong> Miles per hour are converted to km/h (&times;&nbsp;1.609344).</li>
+      <li><strong>Hourly resampling.</strong> Twelve 5-minute readings are averaged per hour, and the hour is kept only if at least 9 of 12 exist.</li>
+      <li><strong>Neighbours.</strong> Each segment receives the speed of its nearest sensors by latitude/longitude distance. This is straight-line distance, not road connectivity.</li>
+      <li><strong>Weather and calendar.</strong> Temperature, humidity and precipitation are merged by hour; a US/California holiday flag, hour and weekday are added.</li>
+      <li><strong>Leakage rules.</strong> Every feature uses data up to hour <em>t</em> only. An automated test (<code>src/tests</code>) enforces this.</li>
     </ol>
-  </section>
+  </div>
+</section>
 
-  <section id="methods">
-    <p class="kicker">04</p>
-    <h2>Baselines and methods</h2>
-    <div class="cards two">
-      <div class="card"><h3>Persistence</h3><p>&ldquo;Speed in two hours equals speed now.&rdquo; The simplest forecast and the one any model must beat.</p></div>
-      <div class="card"><h3>Hour-of-week mean</h3><p>The average speed for this weekday and hour in the training data. It captures the weekly rhythm with no learning.</p></div>
-    </div>
-    <p class="note">The trained models are added here once the final comparison has been run (see Results).</p>
-  </section>
-
-  <section id="evaluation">
-    <p class="kicker">05</p>
-    <h2>Evaluation</h2>
-    <div class="split-diagram" aria-label="Chronological split">
-      <div class="seg train"><span>Train 60%</span></div>
-      <div class="gap" title="2-hour gap"></div>
-      <div class="seg val"><span>Validation 20%</span></div>
-      <div class="gap" title="2-hour gap"></div>
-      <div class="seg test"><span>Test 20%</span></div>
-    </div>
-    <p class="small">Chronological split with 2-hour gaps so a target never overlaps the next block.</p>
-    <ul class="ticks">
-      <li>Tuning used training data only. The test set was used once.</li>
-      <li><strong>MAE</strong> (km/h) is the primary metric; RMSE is also reported.</li>
-      <li><strong>Skill</strong> = 1 &minus; MAE / MAE of persistence. Above 0 means better than persistence.</li>
-      <li>A daily block bootstrap gives a 95% interval for the test MAE.</li>
+<section id="methods">
+  <div class="sec-head"><b>05</b>Baselines and methods</div>
+  <div class="body">
+    <h2 class="t">Two baselines, seven models</h2>
+    <h3>Baselines</h3>
+    <ul>
+      <li><strong>Persistence.</strong> The speed in two hours equals the speed now. It needs no training and is the reference for skill.</li>
+      <li><strong>Hour-of-week mean.</strong> The training-set average for the same weekday and hour. It captures the weekly rhythm without learning anything else.</li>
     </ul>
-  </section>
+    <h3>Models</h3>
+    <ul>
+      <li><strong>Linear regression</strong> and <strong>Ridge</strong> and <strong>Lasso:</strong> interpretable linear baselines; Ridge and Lasso add L2 and L1 penalties to control overfitting and to drop weak features.</li>
+      <li><strong>Decision tree:</strong> captures thresholds and interactions such as &ldquo;weekday and 08:00&rdquo; without manual features.</li>
+      <li><strong>Random forest:</strong> averages many trees to reduce variance.</li>
+      <li><strong>XGBoost:</strong> gradient-boosted trees that fit residual errors step by step.</li>
+      <li><strong>Voting ensemble:</strong> averages the predictions of several models.</li>
+    </ul>
+    <p class="small">Hyperparameters were tuned on training data only; the model with the lowest validation MAE was chosen.</p>
+  </div>
+</section>
 
-  <section id="results">
-    <p class="kicker">06</p>
-    <h2>Results</h2>
+<section id="evaluation">
+  <div class="sec-head"><b>06</b>Evaluation</div>
+  <div class="body">
+    <h2 class="t">A chronological split without leakage</h2>
+    <div class="split" role="img" aria-label="Train 60 percent, validation 20 percent, test 20 percent, separated by 2-hour gaps">
+      <div class="train">train 60%</div><div class="gap"></div><div class="val">val 20%</div><div class="gap"></div><div class="test">test 20%</div>
+    </div>
+    <p class="small">Blocks are in time order. Narrow bars mark the 2-hour gaps.</p>
+    <p>Because the target is two hours ahead, a row at the end of one block has a target that falls inside the next. A 2-hour gap
+       between blocks removes that overlap, so no information about the test period reaches training.</p>
+    <ul>
+      <li>The test set was used once, for the single selected model.</li>
+      <li><strong>MAE</strong> (primary) and <strong>RMSE</strong>, both in km/h.</li>
+      <li><strong>Skill</strong> = 1 &minus; MAE / MAE<sub>persistence</sub>; above 0 beats persistence.</li>
+      <li>A daily block bootstrap gives the 95% interval for the test MAE.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="results">
+  <div class="sec-head"><b>07</b>Results</div>
+  <div class="body wide">
+    <h2 class="t">Model comparison</h2>
     <div id="load-error" class="notice" hidden></div>
-
-    <div class="table-wrap">
+    <div class="tablewrap">
       <table id="metrics-table">
-        <thead><tr><th>Model</th><th>Validation MAE</th><th>Test MAE</th><th>Test RMSE</th>
-               <th>Skill vs persistence</th><th>95% CI (test MAE)</th></tr></thead>
-        <tbody></tbody>
+        <thead><tr><th>Model</th><th>Val MAE</th><th>Test MAE</th><th>Test RMSE</th><th>Skill</th><th>95% CI (test MAE)</th></tr></thead>
+        <tbody>
+          <tr><td>persistence</td><td>5.366</td><td>5.008</td><td>&ndash;</td><td>0.000</td><td>&ndash;</td></tr>
+          <tr><td>hour_of_week</td><td>2.342</td><td>2.436</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>linear</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>ridge</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>lasso</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>tree</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>random_forest</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>xgboost</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+          <tr class="pending"><td>voting</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td><td>&ndash;</td></tr>
+        </tbody>
       </table>
     </div>
-    <p class="small">MAE and RMSE in km/h; lower is better. The highlighted row is the model chosen on validation data.</p>
+    <p class="small">MAE and RMSE in km/h. Baseline rows are measured; model rows are replaced by the exported results when <code>docs/data/metrics.json</code> exists. The bold row is the model chosen on validation data.</p>
 
-    <h3>Interaction 1: Forecast explorer</h3>
-    <p class="small">Pick a segment, a day and a model. The chart compares the real speed with the forecast made two hours earlier.</p>
-    <div class="panel">
-      <div class="controls">
-        <label>Segment <select id="segment-select"></select></label>
-        <label>Date <select id="date-select"></select></label>
-        <label>Model <select id="model-select"></select></label>
-      </div>
-      <div class="chart-box"><canvas id="forecast-chart"></canvas></div>
-      <p id="slice-stats" class="stats-line"></p>
+    <div class="figs">
+      <figure><img src="img/speed_boxplot.png" alt="Speed distribution per segment" loading="lazy">
+        <figcaption><span class="tag">Fig. 5 Spread to be predicted</span>Wider boxes (for example segment 400414) are harder to forecast.</figcaption></figure>
+      <figure><img src="img/hour_dow_heatmap.png" alt="Mean speed by hour and weekday" loading="lazy">
+        <figcaption><span class="tag">Fig. 6 What the hour-of-week baseline learns</span>The weekly rhythm explains most of the variation, which is why that baseline is hard to beat.</figcaption></figure>
     </div>
-  </section>
 
-  <section id="errors">
-    <p class="kicker">07</p>
-    <h2>Errors</h2>
-    <p>Where does the model struggle? The grid shows the error by weekday and hour of the forecast origin.
-       Hatched cells have too few observations to trust.</p>
-    <h3>Interaction 2: Error heatmap</h3>
-    <div class="panel">
-      <div class="controls">
-        <label>Metric <select id="grid-metric">
-          <option value="mae">MAE (km/h)</option>
-          <option value="skill">Skill vs persistence</option>
-        </select></label>
-        <label>Segment <select id="grid-segment"></select></label>
-        <label>Condition <select id="grid-condition">
-          <option value="all">All hours</option>
-          <option value="rain">Rain only</option>
-          <option value="dry">Dry only</option>
-        </select></label>
-      </div>
-      <div id="error-grid" class="grid-wrap"></div>
-      <div class="legend" id="grid-legend"><span id="lg-lo">low</span><i></i><span id="lg-hi">high</span></div>
+    <h3>Forecast explorer</h3>
+    <p class="small">Choose a segment, a day and a model. Each point compares the real speed with the forecast made two hours earlier.</p>
+    <div class="controls">
+      <label>Segment <select id="segment-select"></select></label>
+      <label>Date <select id="date-select"></select></label>
+      <label>Model <select id="model-select"></select></label>
     </div>
-  </section>
+    <div class="chartbox"><canvas id="forecast-chart" aria-label="Forecast versus actual speed" role="img"></canvas></div>
+    <p id="slice-stats"></p>
+  </div>
+</section>
 
-  <section id="limitations">
-    <p class="kicker">08</p>
-    <h2>Limitations</h2>
-    <div class="cards two">
-      <div class="card warn"><h3>Scope</h3><p>Results describe these 8 segments and this half-year only.</p></div>
-      <div class="card warn"><h3>Sensor outages</h3><p>They affect both features and target. Segment 400100 has frozen stretches.</p></div>
-      <div class="card warn"><h3>Missing information</h3><p>No incident, roadworks or event data. Weather is observed at time <em>t</em>, not forecast.</p></div>
-      <div class="card warn"><h3>Association, not causation</h3><p>Patterns shift across seasons and infrastructure changes. Neighbours are by distance, not road connectivity.</p></div>
+<section id="errors">
+  <div class="sec-head"><b>08</b>Errors</div>
+  <div class="body wide">
+    <h2 class="t">Where the forecasts fail</h2>
+    <div class="body">
+      <p>A single average hides when a model is wrong. The grid below shows the error by weekday and hour of the forecast origin.
+         Hatched cells have too few observations to trust.</p>
     </div>
-  </section>
+    <div class="controls">
+      <label>Metric <select id="grid-metric"><option value="mae">MAE (km/h)</option><option value="skill">Skill vs persistence</option></select></label>
+      <label>Segment <select id="grid-segment"></select></label>
+      <label>Condition <select id="grid-condition"><option value="all">All hours</option><option value="rain">Rain only</option><option value="dry">Dry only</option></select></label>
+    </div>
+    <div id="error-grid"></div>
+    <div class="legend"><span id="lg-lo">low</span><i><b style="background:#f4f3ef"></b><b style="background:#c4c3bf"></b><b style="background:#8a8a87"></b><b style="background:#555"></b><b style="background:#2a2a2a"></b></i><span id="lg-hi">high</span></div>
 
-  <section id="conclusion">
-    <p class="kicker">09</p>
-    <h2>Conclusion</h2>
-    <p class="note">To be written after the final test run: the answer to the research question, and what it does and does not show.</p>
-  </section>
+    <div class="body">
+      <h3>Failure cases to examine</h3>
+      <p class="small">These are the specific situations where the data itself is unreliable or unusually hard. Each is checked against the model's errors once the final run is exported.</p>
+      <ol class="cases">
+        <li><strong>Rush-hour onset (07&ndash;09 and 16&ndash;18, Tue&ndash;Thu).</strong> Speeds fall from about 107 to 77&ndash;90 km/h within hours. A forecast made two hours earlier sees free flow and must anticipate the drop.</li>
+        <li><strong>Frozen feed on segment 400100.</strong> The sensor repeats one value for 24 hours on 2017-04-20 and 2017-05-18 (also 12 hours on 05-30 and 06-06). Both features and target are wrong there, so errors on those days say little about the model.</li>
+        <li><strong>Network-wide feed outage on 2017-06-15 around 01:00.</strong> 67% of sensors read zero at once. Neighbour features are missing or distorted across the whole network.</li>
+        <li><strong>Daylight-saving day, 2017-03-12.</strong> The 02:00 hour does not exist; lag features that cross it point at the wrong clock hour.</li>
+        <li><strong>Rain.</strong> Wet hours are rarer in the sample, so error estimates for them are noisier. Use the &ldquo;Rain only&rdquo; condition above.</li>
+      </ol>
+    </div>
+  </div>
+</section>
 
-  <section id="reproduce">
-    <p class="kicker">10</p>
-    <h2>Reproduce</h2>
-    <ol class="steps">
-      <li>Clone the repository and create the environment (see the README).</li>
-      <li>Download the dataset into <code>data/raw/</code> as described in <code>data/raw/SOURCES.md</code>.</li>
-      <li>Run the pipeline in order: build, features and split, train and select, final test, export.</li>
-      <li>Run <code>pytest src/tests</code> to check for leakage.</li>
-    </ol>
-  </section>
+<section id="limitations">
+  <div class="sec-head"><b>09</b>Limitations</div>
+  <div class="body">
+    <h2 class="t">What this study cannot claim</h2>
+    <ul>
+      <li><strong>Missing data.</strong> Zero-valued readings are treated as missing and the 9-of-12 rule discards thin hours. Outages affect features and target alike.</li>
+      <li><strong>Frozen feed.</strong> Segment 400100 repeats values for up to 24 hours on several days. It was kept and flagged rather than repaired.</li>
+      <li><strong>Geography.</strong> Eight segments on Bay Area freeways in one half-year. Results do not transfer to other cities, roads or seasons.</li>
+      <li><strong>Neighbours by distance.</strong> Nearest sensors are chosen by straight-line distance, not by road connectivity or direction of travel.</li>
+      <li><strong>No incidents or events.</strong> Crashes, roadworks and large events are not in the data. Weather is observed at <em>t</em>, not forecast.</li>
+      <li><strong>Association, not causation.</strong> The model finds patterns that predict speed; it does not explain why speed changes.</li>
+    </ul>
+  </div>
+</section>
 
-  <section id="about">
-    <p class="kicker">11</p>
-    <h2>About</h2>
-    <p>Author: Shrey Mevawala. AI tool use is documented in <code>AI_USE.md</code>.</p>
-    <p class="small">Citations: PEMS-BAY and the DCRNN paper (Li et al., 2018); Open-Meteo; scikit-learn; XGBoost; Chart.js.</p>
-  </section>
+<section id="conclusion">
+  <div class="sec-head"><b>10</b>Conclusion</div>
+  <div class="body">
+    <h2 class="t">Did the models beat the baseline?</h2>
+    <p>The hour-of-week baseline is strong: it reaches <span class="mono">2.342 km/h</span> validation MAE (<span class="mono">2.436</span> on test),
+       less than half of persistence at <span class="mono">5.366</span> (<span class="mono">5.008</span> on test). The question is therefore not
+       whether a model can beat persistence, but whether it can improve on a weekly average.</p>
+    <p id="conclusion-dyn" class="todo">Pending the final test run: the selected model, its test MAE against the 2.436 km/h baseline, the size of the improvement with its 95% interval, and a plain statement of what that does and does not show.</p>
+  </div>
+</section>
+
+<section id="reproduce">
+  <div class="sec-head"><b>11</b>Reproduce</div>
+  <div class="body">
+    <h2 class="t">Run it yourself</h2>
+    <p>Python 3.11 or newer; seed <code>random_state=0</code> throughout. Use pandas below version 3, because pandas 3 cannot read the HDF5 file through PyTables.</p>
+<pre><code>python -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+
+python src/01_build_dataset.py
+python src/02_features_split.py
+python src/baselines.py
+python src/03_train_select.py
+python src/04_final_test.py
+python src/05_export_site.py
+
+pytest src/tests          # leakage checks
+python -m http.server 8000 --directory docs</code></pre>
+    <p class="small">Download the two raw files into <code>data/raw/</code> first, as described in <code>data/raw/SOURCES.md</code>.</p>
+  </div>
+</section>
+
+<section id="about">
+  <div class="sec-head"><b>12</b>About</div>
+  <div class="body">
+    <h2 class="t">Author, AI use and contribution</h2>
+    <p><strong>Author:</strong> Shrey Mevawala.</p>
+    <h3>AI use statement</h3>
+    <p>Claude (Anthropic) was used to plan the schedule, generate the repository scaffold and first-draft pipeline code, explain the notebook checks,
+       and draft this site. Every script was run, <code>pytest</code> passes (8 tests), outputs were compared with the course guide, and the notebook
+       results and written notes were checked by the author. The full record is in <code>AI_USE.md</code>.</p>
+    <h3>Contribution log</h3>
+    <dl class="facts">
+      <dt>2026-10-18</dt><dd>Chose PEMS-BAY, built the hourly dataset, chose 8 segments.</dd>
+      <dt>2026-10-19</dt><dd>Notebook 01 part A (raw-file checks), baselines, pytest.</dd>
+      <dt>2026-10-20</dt><dd>Notebook 01 part B (quality plots), website.</dd>
+    </dl>
+    <p class="small">Sources: PEMS-BAY via Li, Yu, Shahabi and Liu (2018), <em>Diffusion Convolutional Recurrent Neural Network</em>, ICLR; Caltrans PeMS; Open-Meteo; scikit-learn; XGBoost; Chart.js.</p>
+  </div>
+</section>
 
 </main>
 
-<footer>
-  <div class="wrap">
-    <p>Static site hosted on GitHub Pages &middot; <a href="https://github.com/Shrey0407/traffic-flow-prediction">Source repository</a> &middot; <a href="#home">Back to top</a></p>
-  </div>
-</footer>
+<footer>Static page &middot; GitHub Pages &middot; <a href="#summary">Back to top</a></footer>
+</div>
 
+<script>
+// Loads precomputed JSON from docs/data/ (written by src/05_export_site.py). No model code runs in the browser.
+const DATA = {
+  metrics: "data/metrics.json", models: "data/models.json", grid: "data/error_grid.json",
+  summary: "data/data_summary.json", predictions: (m) => `data/predictions_${m}.json`,
+};
+const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const $ = (id) => document.getElementById(id);
+let chart = null, predictionRows = [], gridCells = [];
+
+async function getJSON(url) {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`Could not load ${url} (${r.status})`);
+  return r.json();
+}
+const fmt = (x, d = 2) => (x === null || x === undefined || Number.isNaN(x)) ? "–" : Number(x).toFixed(d);
+const css = (n) => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+async function renderSummary() {
+  const s = await getJSON(DATA.summary);
+  $("data-summary").innerHTML = `<dl class="facts">
+    <dt>Dataset</dt><dd>${s.dataset}</dd>
+    <dt>Segments</dt><dd>${s.sensors} (${s.segments.join(", ")})</dd>
+    <dt>Period</dt><dd>${s.start} to ${s.end}</dd>
+    <dt>Hourly rows</dt><dd>${s.rows.toLocaleString()}; missing speed ${(s.missing_rate * 100).toFixed(2)}%</dd>
+    <dt>Train / val / test</dt><dd>${s.n_train.toLocaleString()} / ${s.n_val.toLocaleString()} / ${s.n_test.toLocaleString()} rows</dd>
+    <dt>Test period</dt><dd>${s.test_start} to ${s.test_end}</dd></dl>`;
+}
+
+async function renderMetrics() {
+  const rows = await getJSON(DATA.metrics);
+  const tb = document.querySelector("#metrics-table tbody");
+  tb.innerHTML = rows.map((r) => `<tr class="${r.selected ? "selected" : ""}">
+    <td>${r.model}${r.selected ? " (selected)" : ""}</td><td>${fmt(r.val_mae, 3)}</td><td>${fmt(r.test_mae, 3)}</td>
+    <td>${fmt(r.test_rmse, 3)}</td><td>${fmt(r.skill, 3)}</td>
+    <td>${r.ci_low == null ? "–" : `${fmt(r.ci_low, 3)} – ${fmt(r.ci_high, 3)}`}</td></tr>`).join("");
+  const best = rows.find((r) => r.selected), base = rows.find((r) => r.model === "hour_of_week");
+  if (best && base && best.test_mae != null) {
+    const gain = base.test_mae - best.test_mae;
+    $("headline").textContent = `${best.model}: ${fmt(best.test_mae, 3)} km/h test MAE, skill ${fmt(best.skill, 3)} versus persistence; hour-of-week baseline ${fmt(base.test_mae, 3)}.`;
+    const ci = best.ci_low == null ? "" : ` (95% interval ${fmt(best.ci_low, 3)}–${fmt(best.ci_high, 3)})`;
+    const el = $("conclusion-dyn");
+    el.className = "";
+    el.textContent = `The selected model, ${best.model}, reached a test MAE of ${fmt(best.test_mae, 3)} km/h${ci}, against ${fmt(base.test_mae, 3)} for the hour-of-week baseline: ` +
+      (gain > 0 ? `an improvement of ${fmt(gain, 3)} km/h (${fmt(100 * gain / base.test_mae, 1)}%).` : `no improvement (${fmt(-gain, 3)} km/h worse).`) +
+      ` This describes these segments and this period only.`;
+  }
+}
+
+async function loadPredictions(model) {
+  predictionRows = await getJSON(DATA.predictions(model));
+  const segs = [...new Set(predictionRows.map((r) => r.segment))].sort();
+  $("segment-select").innerHTML = segs.map((s) => `<option>${s}</option>`).join("");
+  populateDates(); drawForecast();
+}
+function populateDates() {
+  const seg = $("segment-select").value;
+  const dates = [...new Set(predictionRows.filter((r) => r.segment === seg).map((r) => r.t.slice(0, 10)))].sort();
+  $("date-select").innerHTML = dates.map((d) => `<option>${d}</option>`).join("");
+}
+function drawForecast() {
+  const seg = $("segment-select").value, day = $("date-select").value;
+  const rows = predictionRows.filter((r) => r.segment === seg && r.t.startsWith(day)).sort((a, b) => a.t.localeCompare(b.t));
+  const ink = css("--ink"), accent = css("--accent"), muted = css("--muted"), rule = css("--rule");
+  const mono = css("--mono");
+  const line = { tension: 0.2, pointRadius: 0, pointHoverRadius: 4 };
+  const data = { labels: rows.map((r) => r.t.slice(11, 16)), datasets: [
+    { ...line, label: "Actual", data: rows.map((r) => r.actual), borderColor: accent, backgroundColor: accent, borderWidth: 2.5 },
+    { ...line, label: "Predicted", data: rows.map((r) => r.pred), borderColor: accent, backgroundColor: accent, borderWidth: 2, borderDash: [6, 4] },
+    { ...line, label: "Persistence", data: rows.map((r) => r.persist), borderColor: muted, backgroundColor: muted, borderWidth: 1.2 },
+  ]};
+  if (chart) chart.destroy();
+  chart = new Chart($("forecast-chart"), { type: "line", data, options: {
+    responsive: true, maintainAspectRatio: false, animation: false,
+    interaction: { mode: "index", intersect: false },
+    plugins: { legend: { labels: { color: ink, font: { family: mono, size: 11 }, boxWidth: 22, boxHeight: 2 } } },
+    scales: {
+      y: { title: { display: true, text: "Speed (km/h)", color: muted, font: { family: mono, size: 11 } }, ticks: { color: muted, font: { family: mono } }, grid: { color: rule } },
+      x: { title: { display: true, text: "Hour forecast was made (t); values are for t + 2 h", color: muted, font: { family: mono, size: 11 } }, ticks: { color: muted, font: { family: mono } }, grid: { display: false } },
+    } } });
+  if (rows.length) {
+    const mae = rows.reduce((s, r) => s + Math.abs(r.actual - r.pred), 0) / rows.length;
+    const maeP = rows.reduce((s, r) => s + Math.abs(r.actual - r.persist), 0) / rows.length;
+    $("slice-stats").textContent = `Selected slice: model MAE ${fmt(mae)} km/h, persistence MAE ${fmt(maeP)} km/h, skill ${fmt(1 - mae / maeP, 3)} (${rows.length} hours).`;
+  } else $("slice-stats").textContent = "No data for this selection.";
+}
+
+function renderGrid() {
+  const metric = $("grid-metric").value, seg = $("grid-segment").value, cond = $("grid-condition").value;
+  const cells = gridCells.filter((c) => c.segment === seg && c.condition === cond);
+  const vals = cells.map((c) => c[metric]).filter((v) => v !== null && !Number.isNaN(v));
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  // monochrome: darker = worse (higher MAE, or lower skill)
+  const shade = (v) => {
+    let t = (v - lo) / (hi - lo || 1);
+    if (metric === "skill") t = 1 - t;
+    const g = Math.round(244 - t * 200);
+    return `rgb(${g},${g},${g - 2})`;
+  };
+  const light = (v) => { let t = (v - lo) / (hi - lo || 1); if (metric === "skill") t = 1 - t; return t < 0.6; };
+  const minN = seg === "all" ? 20 : 3, dec = metric === "mae" ? 1 : 2;
+  $("lg-lo").textContent = metric === "mae" ? `${fmt(lo, dec)} km/h (low error)` : `${fmt(hi, dec)} (better)`;
+  $("lg-hi").textContent = metric === "mae" ? `${fmt(hi, dec)} km/h (high error)` : `${fmt(lo, dec)} (worse)`;
+  let h = "<table><thead><tr><th></th>";
+  for (let i = 0; i < 24; i++) h += `<th>${i}</th>`;
+  h += "</tr></thead><tbody>";
+  for (let d = 0; d < 7; d++) {
+    h += `<tr><th>${DAYS[d]}</th>`;
+    for (let i = 0; i < 24; i++) {
+      const c = cells.find((x) => x.dow === d && x.hour === i);
+      if (!c) { h += '<td class="low-sample"></td>'; continue; }
+      const low = c.n < minN || c[metric] === null;
+      h += `<td class="${low ? "low-sample" : ""}" style="${low ? "" : `background:${shade(c[metric])};color:${light(c[metric]) ? "#1c1c1c" : "#faf9f6"}`}"
+        title="MAE ${fmt(c.mae)} km/h, skill ${fmt(c.skill, 3)}, n=${c.n}${low ? " (low sample)" : ""}">${fmt(c[metric], dec)}</td>`;
+    }
+    h += "</tr>";
+  }
+  $("error-grid").innerHTML = h + "</tbody></table>";
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+  const problems = [];
+  const attempt = async (fn) => { try { await fn(); } catch (e) { problems.push(e.message); } };
+  await attempt(renderSummary);
+  await attempt(renderMetrics);
+  await attempt(async () => {
+    const models = await getJSON(DATA.models);
+    const sel = $("model-select");
+    sel.innerHTML = models.map((m) => `<option value="${m.model}"${m.selected ? " selected" : ""}>${m.model}</option>`).join("");
+    await loadPredictions(sel.value);
+    $("segment-select").addEventListener("change", () => { populateDates(); drawForecast(); });
+    $("date-select").addEventListener("change", drawForecast);
+    sel.addEventListener("change", () => loadPredictions(sel.value));
+  });
+  await attempt(async () => {
+    gridCells = await getJSON(DATA.grid);
+    const segs = [...new Set(gridCells.map((c) => c.segment))].sort((a, b) => a === "all" ? -1 : b === "all" ? 1 : a.localeCompare(b));
+    $("grid-segment").innerHTML = segs.map((s) => `<option>${s}</option>`).join("");
+    renderGrid();
+    for (const id of ["grid-metric", "grid-segment", "grid-condition"]) $(id).addEventListener("change", renderGrid);
+  });
+  if (problems.length) {
+    const box = $("load-error");
+    box.hidden = false;
+    box.innerHTML = "<strong>Model results are not exported yet.</strong> Run <code>python src/05_export_site.py</code>, then serve the <code>docs</code> folder with <code>python -m http.server 8000</code>. Opening the file directly will not load the data.";
+  }
+});
+</script>
 </body>
 </html>
