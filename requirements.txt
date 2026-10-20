@@ -1,7 +1,7 @@
 # Unpinned on purpose for now. After your first full working run, execute:
 #   pip freeze > requirements.txt
 # so the exact versions you used are recorded (the rubric asks for pinned versions).
-pandas
+pandas<3   # pandas 3 cannot read pems-bay.h5 via pytables (TypeError: bytes-like object required)
 numpy
 tables
 pyarrow

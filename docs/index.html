@@ -32,7 +32,7 @@
     <h2>Summary</h2>
     <p>Headline result: <span id="headline">loading…</span></p>
     <p>
-      <a href="https://github.com/YOUR-USERNAME/traffic-flow-prediction">Source repository</a>
+      <a href="https://github.com/Shrey0407/traffic-flow-prediction">Source repository</a>
     </p>
   </section>
 
@@ -49,8 +49,12 @@
 
   <section id="data">
     <h2>Data</h2>
-    <p>Replace this with your own description of the source (PEMS-BAY, Caltrans PeMS via the DCRNN
-       repository), units, and the data-quality findings from Notebook 01.</p>
+    <p>PEMS-BAY, Caltrans PeMS via the DCRNN repository, 8 segments, hourly, Jan-Jun 2017. 0.023% of hours missing 
+      (one outage hour in March, same for all segments). No duplicates. Segment 400100 has a 24 h flat run.</p>
+      <img src="img/hour_dow_heatmap.png" alt="Heatmap of mean speed by weekday and hour; slow at weekday rush hours">
+      <img src="img/missing_by_month.png" alt="Share of missing hours per sensor by month">
+      <img src="img/missing_over_time.png" alt="Daily share of segments with missing speed">
+      <img src="img/speed_boxplot.png" alt="Speed distribution per road segment in km/h">
     <div id="data-summary"></div>
   </section>
 
@@ -150,7 +154,6 @@
   <p>Static site hosted on GitHub Pages.</p>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.js"></script>
-<script src="js/main.js"></script>
+
 </body>
 </html>
