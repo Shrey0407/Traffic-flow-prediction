@@ -8,4 +8,6 @@ Keep this dated and honest. You will use it in the viva to describe your own wor
 | 2026-10-18 | | Ran the dataset build and chose 8 segments. | Hourly dataset, segment list |
 | 2026-10-19 | | Notebook 01 Part A (raw file checks), baselines, pytest. | Notebook 01 Part A; `results/baseline_metrics.csv`; 8 tests passed |
 | 2026-10-19 | | Recorded baseline MAE (km/h): persistence val 5.366 / test 5.008; hour-of-week val 2.342 / test 2.436. | `results/baseline_metrics.csv` |
+| 2026-10-20 | | Data-quality checks and plots (Notebook 01 Part B); website skeleton in `docs/`; pinned pandas<3. | `results/data_quality/`; `docs/index.html`; commit "Day 3" |
+| 2026-10-21 | | Turned on GitHub Pages (main, /docs). Ran `03_train_select.py`: validation MAE for 7 models. Random forest is best trained model (2.595), none beat hour-of-week (2.342). Filled Notebook 02. | `results/validation_metrics.csv`; `configs/final_model.json` (not frozen yet); `results/val_model_comparison.png`; Notebook 02 |
 | | | | |
