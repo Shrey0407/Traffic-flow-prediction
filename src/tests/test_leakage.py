@@ -54,6 +54,7 @@ def test_lag_1h_equals_previous_speed():
     df = seg(build_features(make_hourly()))
     np.testing.assert_allclose(df["lag_1h"].iloc[1:].to_numpy(), df["speed_kmh"].iloc[:-1].to_numpy())
     np.testing.assert_allclose(df["lag_24h"].iloc[24:].to_numpy(), df["speed_kmh"].iloc[:-24].to_numpy())
+    np.testing.assert_allclose(df["lag_168h"].iloc[168:].to_numpy(), df["speed_kmh"].iloc[:-168].to_numpy())
 
 
 def test_rolling_mean_uses_past_and_current_only():
@@ -74,7 +75,7 @@ def test_changing_the_future_does_not_change_features_at_t():
     for df in (a, b):
         df.sort_values(["segment_id", "timestamp"], inplace=True)
     now = a["timestamp"] <= cutoff
-    past_feats = ["lag_1h", "lag_2h", "lag_24h", "roll_3h_mean", "roll_24h_mean"]
+    past_feats = ["lag_1h", "lag_2h", "lag_24h", "lag_168h", "roll_3h_mean", "roll_24h_mean"]
     pd.testing.assert_frame_equal(
         a.loc[now, past_feats].reset_index(drop=True),
         b.loc[b["timestamp"] <= cutoff, past_feats].reset_index(drop=True))
@@ -111,4 +112,4 @@ def test_real_split_files_are_chronological():
     assert (tr["timestamp"] + pd.Timedelta(hours=2)).max() < va["timestamp"].min()
     assert (va["timestamp"] + pd.Timedelta(hours=2)).max() < te["timestamp"].min()
     for df in (tr, va, te):
-        assert df[FEATURES + ["target_2h"]].notna().all().all()
+        assert df[[f for f in FEATURES if f != "lag_168h"] + ["target_2h"]].notna().all().all()

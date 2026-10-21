@@ -18,7 +18,8 @@ GAP_HOURS = 2
 df = pd.read_parquet("data/processed/hourly.parquet")
 df = build_features(df)
 before = len(df)
-df = df.dropna(subset=FEATURES + ["target_2h"])        # rows without a full past or a target
+REQUIRED = [f for f in FEATURES if f != "lag_168h"]    # lag_168h may be NaN in week 1; the model imputer fills it from train
+df = df.dropna(subset=REQUIRED + ["target_2h"])        # rows without a full past or a target
 print(f"Kept {len(df)} of {before} rows after dropping incomplete ones")
 
 train, val, test, t1, t2 = chronological_split(df, gap_hours=GAP_HOURS)

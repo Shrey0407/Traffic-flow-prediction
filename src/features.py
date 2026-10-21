@@ -6,7 +6,7 @@ import pandas as pd
 HORIZON = 2
 
 FEATURES = [
-    "lag_1h", "lag_2h", "lag_24h", "roll_3h_mean", "roll_24h_mean",
+    "lag_1h", "lag_2h", "lag_24h", "lag_168h", "roll_3h_mean", "roll_24h_mean",
     "neighbour_speed_t",
     "temperature", "humidity", "precipitation",
     "hour_sin", "hour_cos", "dow", "is_weekend", "month", "is_holiday",
@@ -25,6 +25,7 @@ def build_features(df: pd.DataFrame) -> pd.DataFrame:
     df["lag_1h"] = g.shift(1)
     df["lag_2h"] = g.shift(2)
     df["lag_24h"] = g.shift(24)
+    df["lag_168h"] = g.shift(168)                      # same hour last week (past only)
     df["roll_3h_mean"] = g.transform(lambda s: s.rolling(3, min_periods=3).mean())
     df["roll_24h_mean"] = g.transform(lambda s: s.rolling(24, min_periods=24).mean())
 
