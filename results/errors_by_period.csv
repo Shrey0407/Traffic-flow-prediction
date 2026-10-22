@@ -1,0 +1,3 @@
+period,n,MAE_model,MAE_hour_of_week,MAE_persistence,skill_vs_persistence,model_minus_how
+off-peak,5624,2.267,2.032,3.731,0.392,0.235
+"weekday rush (7-9, 16-18)",1248,3.869,4.258,10.76,0.64,-0.39

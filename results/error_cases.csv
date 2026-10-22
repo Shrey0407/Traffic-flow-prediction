@@ -1,0 +1,6 @@
+case,slug,segment,day,day_mae_model,day_mae_how,day_mae_persistence,worst_origin,worst_actual,worst_pred,worst_abs_err,image
+1,sudden_drop,407157,2017-06-19,9.81,9.5,16.27,2017-06-19 16:00:00,11.61,104.97,93.36,case_1_sudden_drop.png
+2,morning_dip,407176,2017-06-15,5.31,4.2,10.3,2017-06-15 06:00:00,33.85,85.1,51.25,case_2_morning_dip.png
+3,holiday,407176,2017-05-29,4.85,5.27,1.23,2017-05-29 07:00:00,106.83,73.17,33.66,case_3_holiday.png
+4,frozen_feed,400100,2017-05-30,2.65,2.71,0.81,2017-05-30 06:00:00,108.6,91.53,17.07,case_4_frozen_feed.png
+5,rain_day,402287,2017-06-09,4.57,2.71,9.87,2017-06-09 15:00:00,47.74,65.21,17.47,case_5_rain_day.png

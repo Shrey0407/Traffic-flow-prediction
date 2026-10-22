@@ -1,0 +1,3 @@
+rain,n,MAE_model,MAE_hour_of_week,MAE_persistence,skill_vs_persistence,model_minus_how
+dry,6680,2.563,2.435,5.015,0.489,0.128
+rain,192,2.383,2.481,4.763,0.5,-0.098

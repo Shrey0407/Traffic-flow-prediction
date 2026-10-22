@@ -32,7 +32,8 @@ base = pd.DataFrame({
     "actual": r1(test["target_2h"]),
     "persist": r1(test["persist"]),
 })
-exported = {final_name: test["pred"], "hour_of_week": test["how"], "persistence": test["persist"]}
+# The persistence forecast is already a column ("persist") in every file, so it gets no file of its own.
+exported = {final_name: test["pred"], "hour_of_week": test["how"]}
 for name, series in exported.items():
     base.assign(pred=r1(series))[["t", "segment", "actual", "pred", "persist"]].to_json(
         OUT / f"predictions_{name}.json", orient="records")
@@ -51,15 +52,15 @@ def test_stats(pred):
 mae_p = float(metrics["MAE_persistence"])
 rows = []
 for model, v in cfg["validation_mae"].items():
-    row = {"model": model, "val_mae": round(v, 2), "test_mae": None, "test_rmse": None,
+    row = {"model": model, "val_mae": round(v, 5), "test_mae": None, "test_rmse": None,
            "skill": None, "ci_low": None, "ci_high": None, "selected": model == final_name}
     if model == final_name:
-        row.update(test_mae=round(float(metrics["MAE"]), 2), test_rmse=round(float(metrics["RMSE"]), 2),
+        row.update(test_mae=round(float(metrics["MAE"]), 3), test_rmse=round(float(metrics["RMSE"]), 3),
                    skill=round(float(metrics["skill_vs_persistence"]), 3),
-                   ci_low=round(float(metrics["MAE_CI_low"]), 2), ci_high=round(float(metrics["MAE_CI_high"]), 2))
+                   ci_low=round(float(metrics["MAE_CI_low"]), 3), ci_high=round(float(metrics["MAE_CI_high"]), 3))
     elif model in ("persistence", "hour_of_week"):
         mae, rmse = test_stats(test["persist"] if model == "persistence" else test["how"])
-        row.update(test_mae=round(mae, 2), test_rmse=round(rmse, 2), skill=round(1 - mae / mae_p, 3))
+        row.update(test_mae=round(mae, 3), test_rmse=round(rmse, 3), skill=round(1 - mae / mae_p, 3))
     rows.append(row)
 pd.DataFrame(rows).to_json(OUT / "metrics.json", orient="records")
 
@@ -97,7 +98,7 @@ summary = {
     "start": str(hourly["timestamp"].min().date()),
     "end": str(hourly["timestamp"].max().date()),
     "rows": int(len(hourly)),
-    "missing_rate": round(float(hourly["speed_kmh"].isna().mean()), 4),
+    "missing_rate": round(float(hourly["speed_kmh"].isna().mean()), 5),
     "train_end": split["t1"][:10],
     "val_end": split["t2"][:10],
     "test_start": split["splits"]["test"]["start"][:10],
@@ -105,7 +106,14 @@ summary = {
     "n_train": split["splits"]["train"]["rows"],
     "n_val": split["splits"]["val"]["rows"],
     "n_test": split["splits"]["test"]["rows"],
+    "gap_hours": split["gap_hours"],
+    "splits": split["splits"],
 }
 (OUT / "data_summary.json").write_text(json.dumps(summary, indent=2))
+
+# 5. Paired test comparison and failure cases (written by notebooks 03 and 04; copied here so the site reads one folder)
+for src, dst in [("results/test_paired_difference.csv", "test_paired.json"), ("results/error_cases.csv", "error_cases.json")]:
+    if Path(src).exists():
+        pd.read_csv(src).to_json(OUT / dst, orient="records")
 
 print("Exported to docs/data/:", sorted(p.name for p in OUT.glob("*.json")))
