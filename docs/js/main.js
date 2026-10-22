@@ -112,7 +112,7 @@ function drawBar(rows) {
     data: {
       labels: sorted.map((r) => r.model),
       datasets: [
-        { label: "Validation MAE", data: sorted.map((r) => r.val_mae), backgroundColor: "#a9a79f" },
+        { label: "Validation MAE", data: sorted.map((r) => r.val_mae), backgroundColor: css("--sand") },
         { label: "Test MAE (scored models only)", data: sorted.map((r) => r.test_mae), backgroundColor: accent },
       ],
     },
@@ -162,7 +162,7 @@ function drawForecast() {
     data: { labels, datasets: [
       { ...base, label: "Actual", data: rows.map((r) => r.actual), borderColor: ink, backgroundColor: ink, borderWidth: 2.4 },
       { ...base, label: `Forecast (${model})`, data: rows.map((r) => r.pred), borderColor: accent, backgroundColor: accent, borderWidth: 2, borderDash: [6, 4] },
-      { ...base, label: "Persistence", data: rows.map((r) => r.persist), borderColor: "#a9a79f", backgroundColor: "#a9a79f", borderWidth: 1.4 },
+      { ...base, label: "Persistence", data: rows.map((r) => r.persist), borderColor: css("--sand"), backgroundColor: css("--sand"), borderWidth: 1.8 },
     ] },
     options: {
       responsive: true, maintainAspectRatio: false, animation: false,
@@ -191,13 +191,15 @@ function renderGrid() {
   const vals = cells.filter(ok).map((c) => c[metric]);
   const lo = vals.length ? Math.min(...vals) : 0, hi = vals.length ? Math.max(...vals) : 1;
   const t = (v) => { const x = (v - lo) / (hi - lo || 1); return metric === "skill" ? 1 - x : x; };
-  const shade = (v) => { const g = Math.round(244 - t(v) * 200); return `rgb(${g},${g},${g - 2})`; };
+  // warm scale: cream (good) to rust (bad)
+  const A = [246, 239, 230], B = [168, 67, 28];
+  const shade = (v) => { const k = t(v); return `rgb(${A.map((a, i) => Math.round(a + (B[i] - a) * k)).join(",")})`; };
   const dec = metric === "mae" ? 1 : 2;
   $("lg-lo").textContent = metric === "mae" ? `${fmt(lo, dec)} km/h (low error)` : `${fmt(hi, dec)} (better than persistence)`;
   $("lg-hi").textContent = metric === "mae" ? `${fmt(hi, dec)} km/h (high error)` : `${fmt(lo, dec)} (worse)`;
   $("grid-note").textContent = seg === "all"
-    ? `Cells with fewer than ${MIN_N_ALL} hours are grey.`
-    : `One segment has only about 5 hours per cell in the test block, so cells with fewer than ${MIN_N_SEGMENT} hours are grey and the rest are indicative only. Use "all" for stable patterns.`;
+    ? `Cells with fewer than ${MIN_N_ALL} hours are pale.`
+    : `One segment has only about 5 hours per cell in the test block, so cells with fewer than ${MIN_N_SEGMENT} hours are pale and the rest are indicative only. Use "all" for stable patterns.`;
   let h = "<table><thead><tr><th></th>";
   for (let i = 0; i < 24; i++) h += `<th>${i}</th>`;
   h += "</tr></thead><tbody>";
@@ -207,7 +209,7 @@ function renderGrid() {
       const c = cells.find((x) => x.dow === d && x.hour === i);
       if (!c) { h += '<td class="low-sample"></td>'; continue; }
       const good = ok(c);
-      h += `<td class="${good ? "" : "low-sample"}" style="${good ? `background:${shade(c[metric])};color:${t(c[metric]) < 0.6 ? "#1c1c1c" : "#faf9f6"}` : ""}"
+      h += `<td class="${good ? "" : "low-sample"}" style="${good ? `background:${shade(c[metric])};color:${t(c[metric]) < 0.55 ? "#1b2330" : "#fff"}` : ""}"
         title="${DAYS[d]} ${i}:00 | MAE ${fmt(c.mae)} km/h | skill ${fmt(c.skill, 3)} | n=${c.n}${good ? "" : " (too few hours)"}">${fmt(c[metric], dec)}</td>`;
     }
     h += "</tr>";
@@ -254,4 +256,22 @@ document.addEventListener("DOMContentLoaded", async () => {
     box.innerHTML = `<strong>Some results could not be loaded.</strong> ${problems.join("; ")}. Run <code>python src/05_export_site.py</code>, then serve the <code>docs</code> folder with <code>python -m http.server 8000</code>. Opening the file directly will not load the data.`;
     if (!metrics.length) { $("headline").textContent = "Results could not be loaded."; $("conclusion-dyn").textContent = "Results could not be loaded."; }
   }
+});
+
+// ---------- navigation: mobile menu and active-section highlight ----------
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = $("menu-btn"), links = $("nav-links");
+  btn.addEventListener("click", () => { const open = links.classList.toggle("open"); btn.setAttribute("aria-expanded", String(open)); });
+  links.addEventListener("click", () => { links.classList.remove("open"); btn.setAttribute("aria-expanded", "false"); });
+  const anchors = [...links.querySelectorAll("a")];
+  const byId = new Map(anchors.map((a) => [a.getAttribute("href").slice(1), a]));
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      anchors.forEach((a) => a.classList.remove("active"));
+      const a = byId.get(e.target.id);
+      if (a) a.classList.add("active");
+    }
+  }, { rootMargin: "-25% 0px -65% 0px" });
+  document.querySelectorAll("main section").forEach((sec) => io.observe(sec));
 });
