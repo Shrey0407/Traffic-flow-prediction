@@ -228,21 +228,21 @@
   <div class="lab" id="tab-play" role="tabpanel" aria-labelledby="t-play">
     <div class="lab-grid">
       <div class="ctrl">
-        <div><h4>Data block</h4><div class="seg" id="pg-split"><button type="button" data-v="test" aria-pressed="true">Test (final)</button><button type="button" data-v="val" aria-pressed="false">Validation</button></div></div>
-        <div><h4>Quick scenarios</h4><div class="presets" id="pg-presets">
+        <div><h4>Data block</h4><div class="seg" id="pg-split"><button type="button" data-v="val" aria-pressed="true">Validation (all 9 methods)</button><button type="button" data-v="test" aria-pressed="false">Test (3 scored)</button></div></div>
+        <div class="spanall"><h4>Quick scenarios</h4><div class="presets" id="pg-presets">
           <button class="chip" type="button" data-p="rush">Weekday rush</button><button class="chip" type="button" data-p="off">Off-peak</button>
           <button class="chip" type="button" data-p="ramp">Just before rush</button><button class="chip" type="button" data-p="weekend">Weekend</button>
           <button class="chip" type="button" data-p="rain">Rain only</button><button class="chip" type="button" data-p="holiday">Holiday</button>
           <button class="chip" type="button" data-p="reset">Reset</button></div></div>
-        <div><h4>Sensors <em id="pg-seg-n"></em></h4><div class="chips" id="pg-sensors"></div></div>
+        <div class="span2"><h4>Sensors <em id="pg-seg-n"></em></h4><div class="chips" id="pg-sensors"></div></div>
         <div><h4>Dates <em id="pg-dates"></em></h4><input type="range" id="pg-d0" aria-label="First day"><input type="range" id="pg-d1" aria-label="Last day"></div>
-        <div><h4>Hours <em>(forecast made at)</em></h4><div class="hours" id="pg-hours"></div><div class="small" style="margin-top:4px">Click or drag across hours.</div></div>
+        <div class="spanall"><h4>Hours <em>(forecast made at)</em></h4><div class="hours" id="pg-hours"></div><div class="small" style="margin-top:4px">Click or drag across hours.</div></div>
         <div><h4>Weekdays</h4><div class="dows" id="pg-dows"></div></div>
         <div><h4>Period (project definition)</h4><div class="seg" id="pg-period"><button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="rush" aria-pressed="false">Weekday rush</button><button type="button" data-v="off" aria-pressed="false">Off-peak</button></div><div class="small">Rush = Mon&ndash;Fri, forecast made at 07&ndash;09 or 16&ndash;18.</div></div>
         <div><h4>Holidays</h4><div class="seg" id="pg-hol"><button type="button" data-v="all" aria-pressed="true">Include</button><button type="button" data-v="no" aria-pressed="false">Exclude</button><button type="button" data-v="only" aria-pressed="false">Only</button></div></div>
         <div><h4>Weather</h4><div class="seg" id="pg-rain"><button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="rain" aria-pressed="false">Rain</button><button type="button" data-v="dry" aria-pressed="false">Dry</button></div></div>
       </div>
-      <div class="out">
+      <div class="out"><p class="small" id="pg-block-note" style="margin:0 0 10px"></p>
         <div class="summary"><span class="big" id="pg-n">–</span><span id="pg-n-note" class="muted"></span></div>
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
           <div class="seg" id="pg-metric"><button type="button" data-v="mae" aria-pressed="true">MAE</button><button type="button" data-v="rmse" aria-pressed="false">RMSE</button><button type="button" data-v="skill" aria-pressed="false">Skill vs persistence</button><button type="button" data-v="bias" aria-pressed="false">Bias</button></div>

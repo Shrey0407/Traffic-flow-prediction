@@ -109,6 +109,7 @@
 
     // summary
     const total = B.n, pct = ((n / total) * 100).toFixed(n / total < 0.1 ? 1 : 0);
+    $("#pg-block-note").textContent = PG.split === "val" ? "Validation block: all nine methods, each fitted on the training block only." : "Test block: only the selected model and the two baselines are scored on test, by design. Scoring every model on test would be selecting on test. Switch to Validation to compare all nine.";
     $("#pg-n").textContent = TF.comma(n) + " hours";
     const sparse = n < 30 ? ["bad", "Too few rows to trust"] : n < 100 ? ["warn", "Small sample: treat differences with care"] : ["muted", ""];
     const nd = new Set(); for (let i = 0; i < B.n; i++) if (mask[i]) nd.add(B.dayO[i]);
@@ -418,7 +419,7 @@
       const b = $("#lab-error"); b.hidden = false; b.textContent = msg;
       $$(".lab").forEach((p) => (p.hidden = true)); $$(".tab").forEach((t) => (t.disabled = true)); return;
     }
-    resetPG("test"); buildPG(); renderPG(); buildExplorer(); buildHeat(); buildGame();
+    resetPG("val"); buildPG(); renderPG(); buildExplorer(); buildHeat(); buildGame();
     TF.openTab("play", false);
     addEventListener("keydown", (e) => { if (e.key === "Escape") TF.hideTip(); });
     const mo = new MutationObserver(() => { if (!$("#tab-heat").hidden) drawHeat(); });
