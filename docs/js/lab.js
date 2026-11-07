@@ -271,8 +271,7 @@
     TF.seg($("#hm-rain"), (v) => { HM.rain = v; drawHeat(); });
     $("#hm-model").addEventListener("change", (e) => { HM.model = e.target.value; drawHeat(); });
     $("#hm-metric").addEventListener("change", (e) => { HM.metric = e.target.value; drawHeat(); });
-    $("#hm-seg").addEventListener("change", (e) => { HM.seg = e.target.value; if (!HM.userMin) { HM.min = HM.seg === "all" ? 30 : 4; $("#hm-min").value = HM.min; } drawHeat(); });
-    $("#hm-min").addEventListener("input", (e) => { HM.min = +e.target.value; HM.userMin = true; drawHeat(); });
+    $("#hm-seg").addEventListener("change", (e) => { HM.seg = e.target.value; HM.min = HM.seg === "all" ? 30 : 4; drawHeat(); });
     fillHmModels();
   }
   function fillHmModels() {
@@ -297,7 +296,6 @@
   }
   function drawHeat() {
     if (!P) return;
-    $("#hm-min-v").textContent = HM.min; $("#hm-min").value = HM.min;
     $("#hm-model").value = HM.model; $("#hm-metric").value = HM.metric; fillHmSplitUi();
     const cells = heatCells(), grid = $("#hm-grid"); grid.innerHTML = "";
     const metricVal = (c) => HM.metric === "mae" ? c.m / c.n : HM.metric === "gap" ? (c.m - c.how) / c.n : (c.per > 0 ? 1 - c.m / c.per : NaN);

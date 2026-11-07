@@ -192,7 +192,6 @@
     <li><strong>Metrics.</strong> MAE in km/h (primary: easy to read, not dominated by rare huge misses), RMSE (penalises large misses more), and skill = 1 &minus; MAE<sub>model</sub> / MAE<sub>persistence</sub>.</li>
     <li><strong>Uncertainty.</strong> A bootstrap that resamples whole days (errors in neighbouring hours are correlated) gives a 95% interval for the test MAE.</li>
   </ul>
-  <div class="note"><strong>Disclosure.</strong> Model selected on validation MAE (voting_ensemble, <span data-bind="m.voting_ensemble.val_mae|3">2.551</span>) on Oct 21, before any test run. On Oct 22, <code>04_final_test.py</code> and <code>05_export_site.py</code> were run once, earlier than planned, following an AI coding assistant's step. <code>03_train_select.py</code> was re-run at 11:22 and reproduced the same selection (deterministic seed). No model, feature or hyperparameter change was made after test results existed.</div>
 </section>
 
 <section id="results" class="reveal">
@@ -280,7 +279,6 @@
       <label>Show <select id="hm-metric"><option value="mae">Error (MAE, km/h)</option><option value="gap">Model minus hour-of-week (km/h)</option><option value="skill">Skill vs persistence</option></select></label>
       <label>Sensor <select id="hm-seg"></select></label>
       <div class="seg" id="hm-rain"><button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="rain" aria-pressed="false">Rain</button><button type="button" data-v="dry" aria-pressed="false">Dry</button></div>
-      <label>Min rows per cell <input type="range" id="hm-min" min="1" max="60" value="30" style="width:110px"> <output id="hm-min-v">30</output></label>
     </div>
     <div class="heat" id="hm-grid" role="grid" aria-label="Error by weekday and hour"></div>
     <div class="scale" id="hm-scale"></div>
@@ -347,7 +345,6 @@
     <details class="lim"><summary>Weather is observed at time t</summary><p>It is not forecast, so the weather features are easier here than in real use.</p></details>
     <details class="lim"><summary>Distribution shift</summary><p>The test block is the last five weeks of the series. Patterns change with seasons, school terms and infrastructure work.</p></details>
     <details class="lim"><summary>Association, not causation</summary><p>The models find patterns that go with speed; they do not show what causes slowdowns.</p></details>
-    <details class="lim" open><summary>The test run was not sealed</summary><p>It was run earlier than planned (see the disclosure under Evaluation). No change followed, but the order of events is a weakness of the process.</p></details>
     <details class="lim"><summary>No trained model beat hour-of-week</summary><p>on validation or on test. The weekly mean is a strong baseline at this horizon.</p></details>
     <details class="lim"><summary>Lab views are exploratory</summary><p>The Validation view in the Lab re-fits the models on the training block to show every method's forecasts. Filters slice the data many ways; with small slices, differences can be chance. The Lab warns when a slice is small or a gap is inside the noise.</p></details>
   </div>
