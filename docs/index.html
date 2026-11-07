@@ -11,6 +11,8 @@
 <script src="js/util.js" defer></script>
 <script src="js/data.js" defer></script>
 <script src="js/hero.js" defer></script>
+<script src="js/charts.js" defer></script>
+<script src="js/figures.js" defer></script>
 <script src="js/story.js" defer></script>
 <script src="js/lab.js" defer></script>
 <script src="js/discoveries.js" defer></script>
@@ -20,13 +22,13 @@
 <a class="skip" href="#question">Skip to content</a>
 <nav class="topnav" aria-label="Sections">
   <div class="topnav-in">
-    <a class="brand" href="#summary"><i aria-hidden="true">🚦</i>Road Speed Forecast</a>
+    <a class="brand" href="#summary"><i aria-hidden="true"></i>Road Speed Forecast</a>
     <div class="links" id="nav-links">
       <a href="#question">Question</a><a href="#data">Data</a><a href="#preprocessing">Prep</a><a href="#methods">Methods</a>
-      <a href="#evaluation">Evaluation</a><a href="#results">Results</a><a href="#lab">🧪 Lab</a><a href="#errors">Errors</a>
-      <a href="#discoveries">🔎 Discoveries</a><a href="#limitations">Limits</a><a href="#conclusion">Conclusion</a><a href="#reproduce">Reproduce</a><a href="#about">About</a>
+      <a href="#evaluation">Evaluation</a><a href="#results">Results</a><a href="#lab">Lab</a><a href="#errors">Errors</a>
+      <a href="#discoveries">Discoveries</a><a href="#limitations">Limits</a><a href="#conclusion">Conclusion</a><a href="#reproduce">Reproduce</a><a href="#about">About</a>
     </div>
-    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch light or dark theme" title="Light / dark">🌓</button>
+    <button class="icon-btn" id="theme-btn" type="button" aria-label="Switch light or dark theme" title="Light / dark">Theme</button>
   </div>
   <div class="progress" id="progress"></div>
 </nav>
@@ -39,20 +41,20 @@
         <h1>How fast will traffic move <em>two hours from now?</em></h1>
         <p class="deck">Can a trained model forecast road speed two hours ahead better than two simple rules? This page lets you check it yourself: filter the data, pit the models against each other, and try to beat them.</p>
         <div class="cta">
-          <a class="btn primary" href="#lab" data-open-tab="play">🧪 Open the Lab</a>
-          <a class="btn" href="#lab" data-open-tab="game">🎮 Beat the forecast</a>
-          <a class="btn" href="#discoveries">🔎 Bonus discoveries</a>
+          <a class="btn primary" href="#lab" data-open-tab="play">Open the Lab</a>
+          <a class="btn" href="#lab" data-open-tab="game">Beat the forecast</a>
+          <a class="btn" href="#discoveries">Bonus discoveries</a>
         </div>
       </div>
       <div class="drive" aria-label="Drive the day: typical speed by time of day">
         <h3>Drive the day &middot; typical speed</h3>
         <div class="gauge">
           <svg viewBox="0 0 300 165" role="img" aria-label="Speedometer">
-            <path d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="#27325c" stroke-width="18" stroke-linecap="round"/>
-            <path id="gauge-arc" d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="#2ee6a6" stroke-width="18" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="0"/>
-            <g id="gauge-needle"><line x1="150" y1="150" x2="150" y2="48" stroke="#eef2ff" stroke-width="4" stroke-linecap="round"/><circle cx="150" cy="150" r="9" fill="#eef2ff"/></g>
-            <text x="22" y="164" fill="#a3afd0" font-size="11" font-family="monospace">0</text>
-            <text x="262" y="164" fill="#a3afd0" font-size="11" font-family="monospace">120</text>
+            <path d="M30 150 A120 120 0 0 1 270 150" fill="none" class="track" stroke-width="18" stroke-linecap="round"/>
+            <path id="gauge-arc" d="M30 150 A120 120 0 0 1 270 150" fill="none" stroke="var(--ok)" stroke-width="18" stroke-linecap="round" stroke-dasharray="377" stroke-dashoffset="0"/>
+            <g id="gauge-needle"><line class="needle" x1="150" y1="150" x2="150" y2="48" stroke-width="4" stroke-linecap="round"/><circle class="hub" cx="150" cy="150" r="9"/></g>
+            <text x="22" y="164" font-size="11" font-family="monospace">0</text>
+            <text x="262" y="164" font-size="11" font-family="monospace">120</text>
           </svg>
           <div class="val"><span id="gauge-val">–</span> km/h<small id="gauge-note">loading</small></div>
         </div>
@@ -62,7 +64,7 @@
         </div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center">
           <div class="seg" id="drive-day" role="group" aria-label="Day type"><button type="button" data-v="weekday" aria-pressed="true">Weekday</button><button type="button" data-v="weekend" aria-pressed="false">Weekend</button></div>
-          <button class="btn sm" type="button" id="drive-play">▶ Play a day</button>
+          <button class="btn sm" type="button" id="drive-play">Play a day</button>
         </div>
       </div>
     </div>
@@ -118,13 +120,13 @@
     <div class="card"><span class="tag weak">caution</span><h3>One frozen feed</h3><p>Segment 400100 repeats one value for 10 to 24 hours on several days. It was kept and is listed as a limitation.</p></div>
   </div>
   <div class="figs">
-    <figure><img src="img/hour_dow_heatmap.png" width="1500" height="525" alt="Heatmap of mean speed by weekday and hour: slow around 7 to 9 and 16 to 18 on weekdays, fast at night and on weekends" loading="lazy">
-      <figcaption><b>Fig. 1 &middot; Speed by hour and weekday</b>Weekdays slow at 07&ndash;09 and 16&ndash;18; nights and weekends stay near free flow. This is the pattern the hour-of-week table learns. (Click to zoom.)</figcaption></figure>
-    <figure><img src="img/speed_boxplot.png" width="1350" height="600" alt="Box plot of hourly speed for each of the eight segments in km/h" loading="lazy">
+    <figure class="wide"><div class="fig-body" id="fig-dowheat"><img src="img/hour_dow_heatmap.png" alt="" loading="lazy"></div>
+      <figcaption><b>Fig. 1 &middot; Speed by hour and weekday</b>Weekdays slow at 07&ndash;09 and 16&ndash;18; nights and weekends stay near free flow. This is the pattern the hour-of-week table learns. </figcaption></figure>
+    <figure class="wide"><div class="fig-body" id="fig-box"><img src="img/speed_boxplot.png" alt="" loading="lazy"></div>
       <figcaption><b>Fig. 2 &middot; Speed by segment</b>Most hours are near the speed limit; the low outliers are congestion. Segment 400414 has the widest spread.</figcaption></figure>
-    <figure><img src="img/missing_by_month.png" width="1350" height="600" alt="Share of missing hours for each segment by month; only March has a small bar" loading="lazy">
+    <figure class="wide"><div class="fig-body" id="fig-missmonth"><img src="img/missing_by_month.png" alt="" loading="lazy"></div>
       <figcaption><b>Fig. 3 &middot; Missing hours by month</b>Only March has a bar: the daylight-saving hour.</figcaption></figure>
-    <figure><img src="img/missing_over_time.png" width="1350" height="450" alt="Daily share of segments with missing speed, flat at zero except one spike on 12 March" loading="lazy">
+    <figure class="wide"><div class="fig-body" id="fig-missday"><img src="img/missing_over_time.png" alt="" loading="lazy"></div>
       <figcaption><b>Fig. 4 &middot; Missing share by day</b>One small spike on 12 March; every other day is complete.</figcaption></figure>
   </div>
   <div id="data-summary"></div>
@@ -141,12 +143,6 @@
     <button class="step" type="button" aria-pressed="false" data-i="3"><b>STEP 4</b><span>Features + target</span></button>
   </div>
   <div class="steppanel" id="steppanel"></div>
-
-  <h3 style="margin-top:34px">🕵️ Spot the leak</h3>
-  <p class="small">A <em>leak</em> means the model would see information from the future. Tick every input below that would leak at hour <em>t</em>, then press Check.</p>
-  <div class="quiz" id="leak-quiz"></div>
-  <button class="btn sm" type="button" id="leak-check">Check my answers</button>
-  <p id="leak-result" class="small" style="margin-top:8px"></p>
 
   <h3 style="margin-top:34px">Three leakage rules used</h3>
   <div class="cards">
@@ -196,20 +192,13 @@
     <li><strong>Metrics.</strong> MAE in km/h (primary: easy to read, not dominated by rare huge misses), RMSE (penalises large misses more), and skill = 1 &minus; MAE<sub>model</sub> / MAE<sub>persistence</sub>.</li>
     <li><strong>Uncertainty.</strong> A bootstrap that resamples whole days (errors in neighbouring hours are correlated) gives a 95% interval for the test MAE.</li>
   </ul>
-  <div class="card errlab" id="errlab">
-    <h3>🔧 Why RMSE exists: try it</h3>
-    <p class="small">Nine forecasts miss by 2 km/h. Drag the slider to make the tenth miss bigger. Watch which number reacts.</p>
-    <input type="range" id="errlab-in" min="2" max="60" value="2" aria-label="Size of the tenth miss in km/h">
-    <div class="bars" id="errlab-bars"></div>
-    <p class="small" id="errlab-note"></p>
-  </div>
   <div class="note"><strong>Disclosure.</strong> Model selected on validation MAE (voting_ensemble, <span data-bind="m.voting_ensemble.val_mae|3">2.551</span>) on Oct 21, before any test run. On Oct 22, <code>04_final_test.py</code> and <code>05_export_site.py</code> were run once, earlier than planned, following an AI coding assistant's step. <code>03_train_select.py</code> was re-run at 11:22 and reproduced the same selection (deterministic seed). No model, feature or hyperparameter change was made after test results existed.</div>
 </section>
 
 <section id="results" class="reveal">
   <div class="eyebrow"><b>06</b>Results</div>
   <h2>The leaderboard</h2>
-  <p class="lede">Click a bar to send that model to the Lab. Orange outline: the model chosen on validation.</p>
+  <p class="lede">Click a bar to send that model to the Lab. Outlined: the model chosen on validation.</p>
   <div id="load-error" class="err-banner" hidden></div>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <div class="seg" id="lb-split" role="group" aria-label="Which block"><button type="button" data-v="val" aria-pressed="true">Validation MAE (all 9)</button><button type="button" data-v="test" aria-pressed="false">Test MAE (3 scored)</button></div>
@@ -217,11 +206,6 @@
   <div class="bars" id="lb-bars"></div>
   <p class="small" id="lb-note"></p>
   <p id="results-read"></p>
-  <h3>Is the model really worse than the table? A look at the uncertainty</h3>
-  <div class="card">
-    <div class="num-line" id="paired" role="img" aria-label="Paired test difference with 95 percent intervals"></div>
-    <p class="small" style="margin:0">Each bar is the 95% range of (model MAE &minus; reference MAE) on test, from a day-block bootstrap. Left of zero means the model is better. A bar that touches zero means we cannot tell.</p>
-  </div>
   <div class="tablewrap">
     <table class="numeric" id="metrics-table"><thead><tr><th>Model</th><th>Val MAE</th><th>Test MAE</th><th>Test RMSE</th><th>Skill</th><th>95% CI (test MAE)</th></tr></thead><tbody></tbody></table>
   </div>
@@ -235,10 +219,10 @@
   <div class="note" style="margin-top:0"><strong>Fair-play rule.</strong> The <b>Test</b> view scores only the selected model and the two baselines, as in the project design. The <b>Validation</b> view shows all nine methods, with models fitted on the training block only. Validation is where the winner was already chosen, so exploring it adds no test leakage.</div>
   <div id="lab-error" class="err-banner" hidden></div>
   <div class="tabs" role="tablist" aria-label="Lab tools">
-    <button class="tab" role="tab" id="t-play" aria-selected="true" data-tab="play">🧪 Playground</button>
-    <button class="tab" role="tab" id="t-explore" aria-selected="false" data-tab="explore">📈 Forecast explorer</button>
-    <button class="tab" role="tab" id="t-heat" aria-selected="false" data-tab="heat">🔥 Error heatmap</button>
-    <button class="tab" role="tab" id="t-game" aria-selected="false" data-tab="game">🎮 Beat the forecast</button>
+    <button class="tab" role="tab" id="t-play" aria-selected="true" data-tab="play">Playground</button>
+    <button class="tab" role="tab" id="t-explore" aria-selected="false" data-tab="explore">Forecast explorer</button>
+    <button class="tab" role="tab" id="t-heat" aria-selected="false" data-tab="heat">Error heatmap</button>
+    <button class="tab" role="tab" id="t-game" aria-selected="false" data-tab="game">Beat the forecast</button>
   </div>
 
   <div class="lab" id="tab-play" role="tabpanel" aria-labelledby="t-play">
@@ -246,13 +230,13 @@
       <div class="ctrl">
         <div><h4>Data block</h4><div class="seg" id="pg-split"><button type="button" data-v="test" aria-pressed="true">Test (final)</button><button type="button" data-v="val" aria-pressed="false">Validation</button></div></div>
         <div><h4>Quick scenarios</h4><div class="presets" id="pg-presets">
-          <button class="chip" type="button" data-p="rush">🚗 Weekday rush</button><button class="chip" type="button" data-p="off">🌙 Off-peak</button>
-          <button class="chip" type="button" data-p="ramp">📉 Just before rush</button><button class="chip" type="button" data-p="weekend">🏖 Weekend</button>
-          <button class="chip" type="button" data-p="rain">🌧 Rain only</button><button class="chip" type="button" data-p="holiday">🎗 Holiday</button>
-          <button class="chip" type="button" data-p="reset">↺ Reset</button></div></div>
+          <button class="chip" type="button" data-p="rush">Weekday rush</button><button class="chip" type="button" data-p="off">Off-peak</button>
+          <button class="chip" type="button" data-p="ramp">Just before rush</button><button class="chip" type="button" data-p="weekend">Weekend</button>
+          <button class="chip" type="button" data-p="rain">Rain only</button><button class="chip" type="button" data-p="holiday">Holiday</button>
+          <button class="chip" type="button" data-p="reset">Reset</button></div></div>
         <div><h4>Sensors <em id="pg-seg-n"></em></h4><div class="chips" id="pg-sensors"></div></div>
         <div><h4>Dates <em id="pg-dates"></em></h4><input type="range" id="pg-d0" aria-label="First day"><input type="range" id="pg-d1" aria-label="Last day"></div>
-        <div><h4>Hours</h4><div class="seg" id="pg-basis" style="margin-bottom:8px"><button type="button" data-v="origin" aria-pressed="true">forecast made at</button><button type="button" data-v="target" aria-pressed="false">forecast is for</button></div><div class="hours" id="pg-hours"></div><div class="small" style="margin-top:4px">Click or drag across hours.</div></div>
+        <div><h4>Hours <em>(forecast made at)</em></h4><div class="hours" id="pg-hours"></div><div class="small" style="margin-top:4px">Click or drag across hours.</div></div>
         <div><h4>Weekdays</h4><div class="dows" id="pg-dows"></div></div>
         <div><h4>Period (project definition)</h4><div class="seg" id="pg-period"><button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="rush" aria-pressed="false">Weekday rush</button><button type="button" data-v="off" aria-pressed="false">Off-peak</button></div><div class="small">Rush = Mon&ndash;Fri, forecast made at 07&ndash;09 or 16&ndash;18.</div></div>
         <div><h4>Holidays</h4><div class="seg" id="pg-hol"><button type="button" data-v="all" aria-pressed="true">Include</button><button type="button" data-v="no" aria-pressed="false">Exclude</button><button type="button" data-v="only" aria-pressed="false">Only</button></div></div>
@@ -263,7 +247,6 @@
         <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:6px">
           <div class="seg" id="pg-metric"><button type="button" data-v="mae" aria-pressed="true">MAE</button><button type="button" data-v="rmse" aria-pressed="false">RMSE</button><button type="button" data-v="skill" aria-pressed="false">Skill vs persistence</button><button type="button" data-v="bias" aria-pressed="false">Bias</button></div>
         </div>
-        <div class="chips" id="pg-models" aria-label="Methods to compare"></div>
         <div class="bars" id="pg-bars"></div>
         <div class="verdict" id="pg-verdict"></div>
         <p class="small" id="pg-help"></p>
@@ -276,12 +259,12 @@
     <div class="dayrow">
       <div class="seg" id="ex-split"><button type="button" data-v="test" aria-pressed="true">Test</button><button type="button" data-v="val" aria-pressed="false">Validation</button></div>
       <label>Sensor <select id="ex-seg"></select></label>
-      <button class="btn sm" type="button" id="ex-prev" aria-label="Previous day">◀</button>
+      <button class="btn sm" type="button" id="ex-prev" aria-label="Previous day">Prev</button>
       <input type="date" id="ex-date" aria-label="Day">
-      <button class="btn sm" type="button" id="ex-next" aria-label="Next day">▶</button>
-      <button class="btn sm" type="button" id="ex-rand">🎲 Random day</button>
-      <button class="btn sm" type="button" id="ex-worst">💥 Worst day for this sensor</button>
-      <button class="btn sm primary" type="button" id="ex-play">▶ Replay live</button>
+      <button class="btn sm" type="button" id="ex-next" aria-label="Next day">Next</button>
+      <button class="btn sm" type="button" id="ex-rand">Random day</button>
+      <button class="btn sm" type="button" id="ex-worst">Worst day for this sensor</button>
+      <button class="btn sm primary" type="button" id="ex-play">Replay live</button>
     </div>
     <div class="chips" id="ex-models" aria-label="Methods to draw" style="margin-bottom:8px"></div>
     <div class="chartbox" id="ex-chart"></div>
@@ -297,7 +280,6 @@
       <label>Show <select id="hm-metric"><option value="mae">Error (MAE, km/h)</option><option value="gap">Model minus hour-of-week (km/h)</option><option value="skill">Skill vs persistence</option></select></label>
       <label>Sensor <select id="hm-seg"></select></label>
       <div class="seg" id="hm-rain"><button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="rain" aria-pressed="false">Rain</button><button type="button" data-v="dry" aria-pressed="false">Dry</button></div>
-      <div class="seg" id="hm-basis"><button type="button" data-v="origin" aria-pressed="true">made at</button><button type="button" data-v="target" aria-pressed="false">for</button></div>
       <label>Min rows per cell <input type="range" id="hm-min" min="1" max="60" value="30" style="width:110px"> <output id="hm-min-v">30</output></label>
     </div>
     <div class="heat" id="hm-grid" role="grid" aria-label="Error by weekday and hour"></div>
@@ -310,14 +292,14 @@
       <span class="small">Situations:</span>
       <div class="seg" id="gm-mode"><button type="button" data-v="rush" aria-pressed="true">Weekday rush</button><button type="button" data-v="change" aria-pressed="false">Speed about to change</button><button type="button" data-v="any" aria-pressed="false">Any hour</button></div>
       <span class="small" id="gm-round">Round 1 of 10</span>
-      <button class="btn sm" type="button" id="gm-reset">↺ New game</button>
+      <button class="btn sm" type="button" id="gm-reset">New game</button>
     </div>
     <div class="two">
       <div>
         <div class="chartbox" id="gm-chart"></div>
         <label for="gm-guess" class="small">Your guess for the speed at <b id="gm-target">t + 2</b>: <b class="mono" id="gm-guess-val">–</b> km/h</label>
         <input type="range" id="gm-guess" min="20" max="120" step="1" value="70">
-        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn primary" type="button" id="gm-lock" disabled>🔒 Lock in my guess</button><button class="btn" type="button" id="gm-next" hidden>Next round ➜</button></div>
+        <div style="display:flex;gap:8px;margin-top:8px"><button class="btn primary" type="button" id="gm-lock" disabled>Lock in my guess</button><button class="btn" type="button" id="gm-next" hidden>Next round</button></div>
         <div class="game-msg" id="gm-msg" aria-live="polite">Move the slider to guess, then lock it in.</div>
       </div>
       <div class="card">
@@ -335,11 +317,11 @@
   <h2>Where the forecasts fail</h2>
   <p class="lede">Errors below are for the selected model on the test block, next to the hour-of-week table and persistence. This analysis describes errors; it did not change the model.</p>
   <div class="figs">
-    <figure><img src="img/errors_by_segment.png" width="1350" height="570" alt="Test MAE by segment for the voting ensemble, hour-of-week and persistence" loading="lazy">
+    <figure class="wide"><div class="fig-body" id="fig-seg"><img src="img/errors_by_segment.png" alt="" loading="lazy"></div>
       <figcaption><b>Fig. 5 &middot; By segment</b>Persistence is much worse on every segment except 400100, whose feed is frozen. The ensemble is within a few tenths of km/h of the table on most segments.</figcaption></figure>
-    <figure><img src="img/errors_by_hour.png" width="1350" height="570" alt="Test MAE by hour of day for the three methods; peaks around the morning transition" loading="lazy">
+    <figure class="wide"><div class="fig-body" id="fig-hour"><img src="img/errors_by_hour.png" alt="" loading="lazy"></div>
       <figcaption><b>Fig. 6 &middot; By hour of day</b>Errors peak when traffic changes fast, around the start of the morning rush.</figcaption></figure>
-    <figure style="grid-column:1/-1"><img src="img/errors_by_weekday_rain_rush.png" width="1950" height="570" alt="Test MAE by weekday, rain versus dry hours, and weekday rush hour versus off-peak" loading="lazy">
+    <figure class="wide"><div class="fig-body" id="fig-three"><img src="img/errors_by_weekday_rain_rush.png" alt="" loading="lazy"></div>
       <figcaption><b>Fig. 7 &middot; Weekday, rain, rush hour</b>Rush hours are harder than off-peak. The ensemble is closer than the table in rush hours and slightly worse off-peak. Rainy hours are not clearly worse than dry hours (few wet days).</figcaption></figure>
   </div>
   <h3>Five failure cases</h3>
@@ -350,7 +332,7 @@
 
 <section id="discoveries" class="reveal">
   <div class="eyebrow"><b>09</b>Bonus</div>
-  <h2>🔎 Discoveries hiding in the results</h2>
+  <h2>Discoveries hiding in the results</h2>
   <p class="lede">Patterns found while analysing the errors. Every number is computed live from the data, and every card has a <b>Try it</b> button that sets up the Lab so you can check the claim yourself.</p>
   <div class="dgrid" id="dgrid"></div>
 </section>
@@ -413,7 +395,7 @@ python -m http.server 8000 --directory docs</code></pre>
 
 </main>
 <footer>Static page &middot; GitHub Pages &middot; <a href="#summary">Back to top</a></footer>
-<a class="btn primary sm fab" href="#lab" id="fab" data-open-tab="play">🧪 Lab</a>
+<a class="btn primary sm fab" href="#lab" id="fab" data-open-tab="play">Lab</a>
 <div class="tip" id="tip" role="tooltip"></div>
 <div class="toast" id="toast" role="status"></div>
 </body>

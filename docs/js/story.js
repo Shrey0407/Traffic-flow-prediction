@@ -70,21 +70,6 @@
     { t: "Rain actually measured at t + 2", leak: true, why: "It is measured at the moment we are trying to predict." },
     { t: "“Is t + 2 a public holiday?”", leak: false, why: "The calendar is known in advance, so this is allowed (is_holiday)." },
   ];
-  function leakQuiz() {
-    const box = $("#leak-quiz");
-    LEAKS.forEach((q, i) => box.append(el("button", { type: "button", "aria-pressed": "false", "data-i": i }, q.t, el("small", { hidden: true }, q.why))));
-    box.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b && !b.dataset.done) b.setAttribute("aria-pressed", String(b.getAttribute("aria-pressed") !== "true")); });
-    $("#leak-check").addEventListener("click", () => {
-      let ok = 0;
-      $$("#leak-quiz button").forEach((b) => {
-        const q = LEAKS[+b.dataset.i], on = b.getAttribute("aria-pressed") === "true", right = on === q.leak;
-        b.classList.toggle("right", right); b.classList.toggle("wrong", !right); b.dataset.done = "1"; b.querySelector("small").hidden = false;
-        if (right) ok++;
-      });
-      $("#leak-result").textContent = `${ok} of ${LEAKS.length} correct. ` + (ok === LEAKS.length ? "You think like the leakage test in src/tests." : "Read the grey notes under each line.");
-    });
-  }
-
   // ---------- method cards ----------
   function methods() {
     const g = $("#mgrid"), m = TF.D.m;
@@ -92,7 +77,7 @@
       const M = TF.MODELS[id], v = m[id] ? m[id].val_mae : null;
       const more = el("div", { class: "more", hidden: true },
         el("div", {}, el("b", {}, "How: "), M.how), el("div", {}, el("b", {}, "Assumes: "), M.assume), el("div", {}, el("b", {}, "Why included: "), M.why),
-        el("button", { class: "btn sm", type: "button", style: "margin-top:10px", onclick: (e) => { e.stopPropagation(); TF.focusModel(id, true); } }, "🧪 Try it in the Lab"));
+        el("button", { class: "btn sm", type: "button", style: "margin-top:10px", onclick: (e) => { e.stopPropagation(); TF.focusModel(id, true); } }, "Open in the Lab"));
       const card = el("div", { class: "mcard", role: "button", tabindex: "0", "aria-expanded": "false", style: `--mc: var(--c-${id})` },
         el("span", { class: "tag" }, M.kind), el("h3", {}, M.label), el("p", {}, M.blurb),
         el("div", { class: "meter" }, el("i", { style: `width:${Math.max(8, M.flex * 20)}%` })),
@@ -102,19 +87,6 @@
       card.addEventListener("keydown", (e) => { if ((e.key === "Enter" || e.key === " ") && e.target === card) { e.preventDefault(); toggle(); } });
       g.append(card);
     });
-  }
-
-  // ---------- RMSE vs MAE mini lab ----------
-  function errLab() {
-    const inp = $("#errlab-in"), box = $("#errlab-bars");
-    const draw = () => {
-      const x = +inp.value, mae = (18 + x) / 10, rmse = Math.sqrt((36 + x * x) / 10), max = 40;
-      box.innerHTML = "";
-      [["MAE", mae, "var(--c-hour_of_week)"], ["RMSE", rmse, "var(--c-voting_ensemble)"]].forEach(([n, v, c]) =>
-        box.append(el("div", { class: "bar", style: `--mc:${c}` }, el("span", { class: "name" }, n), el("div", { class: "track" }, el("div", { class: "fill", style: `width:${Math.min(100, (v / max) * 100)}%` })), el("span", { class: "v" }, v.toFixed(2)))));
-      $("#errlab-note").textContent = `Tenth miss = ${x} km/h. MAE ${mae.toFixed(2)} (${(mae / 2).toFixed(1)}× the typical 2) but RMSE ${rmse.toFixed(2)} (${(rmse / 2).toFixed(1)}×). RMSE punishes rare big misses harder, which is why both are reported.`;
-    };
-    inp.addEventListener("input", draw); draw();
   }
 
   // ---------- leaderboard ----------
@@ -128,7 +100,6 @@
       const scored = r.test_mae != null, na = '<td class="muted">n/a</td>';
       return `<tr style="${r.selected ? "background:var(--card2);font-weight:700" : ""}"><td>${TF.label(r.model)}${r.selected ? " (selected)" : ""}</td><td>${fmt(r.val_mae, 3)}</td>${scored ? `<td>${fmt(r.test_mae, 3)}</td><td>${fmt(r.test_rmse, 3)}</td><td>${fmt(r.skill, 3)}</td>` : na + na + na}${r.ci_low == null ? '<td class="muted">–</td>' : `<td>${fmt(r.ci_low, 3)} – ${fmt(r.ci_high, 3)}</td>`}</tr>`;
     }).join("");
-    paired();
   }
   function drawLB(which) {
     const rows = TF.D.metrics.filter((r) => which === "val" ? r.val_mae != null : r.test_mae != null)
@@ -139,7 +110,7 @@
       const track = el("div", { class: "track" }, el("div", { class: "fill", style: "width:0" }));
       if (which === "test" && r.ci_low != null) track.append(el("div", { class: "ci", style: `left:${(r.ci_low / max) * 100}%;width:${((r.ci_high - r.ci_low) / max) * 100}%` }));
       const b = el("div", { class: "bar" + (i === 0 ? " win" : "") + (r.selected ? " sel" : ""), style: `--mc: var(--c-${r.model})` },
-        el("button", { class: "name", type: "button", title: "Send to the Lab", onclick: () => TF.focusModel(r.model, true) }, el("i"), TF.label(r.model), i === 0 ? el("span", { class: "crown" }, "👑") : null),
+        el("button", { class: "name", type: "button", title: "Send to the Lab", onclick: () => TF.focusModel(r.model, true) }, el("i"), TF.label(r.model), i === 0 ? el("span", { class: "best" }, "lowest") : null),
         track, el("span", { class: "v" }, fmt(r.v, 3)));
       box.append(b);
       requestAnimationFrame(() => requestAnimationFrame(() => { track.firstChild.style.width = (r.v / max) * 100 + "%"; }));
@@ -149,20 +120,6 @@
       ? `Validation (used to choose the model): ${TF.label(top.model)} is lowest overall; the best trained model is ${TF.label(bestTrained.model)} (${fmt(bestTrained.v, 3)}). Persistence and the linear models are far behind the tree models.`
       : `Test: only the selected model and the two baselines are scored. The black whisker is the 95% interval for the ensemble (day-block bootstrap). It overlaps the table’s value, so the two cannot be separated with certainty.`;
   }
-  function paired() {
-    const box = $("#paired"), P = TF.D.paired; if (!P.length) { box.textContent = "paired differences not available"; return; }
-    const lo = -3.4, hi = 0.6, pos = (x) => ((x - lo) / (hi - lo)) * 100;
-    box.style.height = "168px"; box.innerHTML = "";
-    box.append(el("div", { class: "zero", style: `left:${pos(0)}%` }, el("span", {}, "0 = no difference")));
-    P.forEach((r, i) => {
-      const top = 40 + i * 62, inc0 = r.ci_low <= 0 && r.ci_high >= 0;
-      box.append(el("div", { class: "ci", style: `top:${top}px;left:${pos(r.ci_low)}%;width:${pos(r.ci_high) - pos(r.ci_low)}%;--mc:${inc0 ? "var(--slow)" : "var(--go)"}` }));
-      box.append(el("div", { class: "pt", style: `top:${top - 6}px;left:calc(${pos(r.mean_diff)}% - 2px)` }));
-      box.append(el("div", { class: "lab", style: `top:${top + 20}px;left:${Math.min(88, Math.max(14, pos((r.ci_low + r.ci_high) / 2)))}%` },
-        `ensemble − ${TF.label(r.reference)}: `, el("b", {}, TF.sign(r.mean_diff, 3)), el("br"), `95%: ${fmt(r.ci_low, 3)} to ${fmt(r.ci_high, 3)} · `, el("span", { class: inc0 ? "warn" : "good" }, inc0 ? "includes 0: can’t tell" : "clearly better")));
-    });
-  }
-
   // ---------- sensor map ----------
   function sensorMap() {
     const S = TF.D.sensors, map = $("#sensor-map"); if (!S) { map.replaceWith(el("p", { class: "muted" }, "Sensor locations not available.")); return; }
@@ -193,7 +150,7 @@
       el("span", { class: "name" }, el("i"), TF.label(r.m).replace(" table", "")), el("div", { class: "track" }, el("div", { class: "fill", style: `width:${(r.mae / max) * 100}%` })), el("span", { class: "v" }, fmt(r.mae, 2)))));
     box.append(bars);
     box.append(el("p", { class: "small" }, `Best here: ${TF.label(best.m)}. ` + (ens.mae < how.mae ? `The ensemble beats the table by ${fmt(how.mae - ens.mae, 2)} km/h on this sensor.` : `The table beats the ensemble by ${fmt(ens.mae - how.mae, 2)} km/h on this sensor.`) + (per.mae < ens.mae ? " Persistence also beats the ensemble here: this is the sensor with the frozen feed, where “speed now” is almost always right." : "")));
-    box.append(el("button", { class: "btn sm", type: "button", onclick: () => TF.openExplorer({ split: "test", seg: String(id) }) }, "📈 Open this sensor in the explorer"));
+    box.append(el("button", { class: "btn sm", type: "button", onclick: () => TF.openExplorer({ split: "test", seg: String(id) }) }, "Open this sensor in the explorer"));
   }
 
   // ---------- failure cases ----------
@@ -207,19 +164,21 @@
   function cases() {
     const C = TF.D.cases, bar = $("#casebar"), box = $("#casebox");
     if (!C.length) { box.textContent = "No case data."; return; }
-    const show = (i) => {
+    let show = (i) => {
       $$("#casebar button").forEach((b) => b.setAttribute("aria-pressed", String(+b.dataset.i === i)));
       const c = C[i], [title, why] = CASE_TXT[c.case] || ["Case " + c.case, ""];
       box.innerHTML = "";
-      box.append(el("figure", {}, el("img", { src: "img/" + c.image, alt: `Case ${c.case}: ${title}, segment ${c.segment} on ${c.day}`, loading: "lazy" })));
+      const fig = el("figure", {}), body = el("div", { class: "fig-body" }); fig.append(body); box.append(fig);
+      if (!TF.caseChart(body, c.segment, String(c.day).slice(0, 10))) body.append(el("img", { src: "img/" + c.image, alt: `Case ${c.case}: ${title}, segment ${c.segment} on ${c.day}`, loading: "lazy" }));
       box.append(el("div", {},
         el("h3", {}, `Case ${c.case}. ${title}`),
         el("p", { class: "mono small" }, `Segment ${c.segment} · ${c.day}`),
         el("p", {}, el("b", {}, "That day’s MAE: "), `ensemble ${fmt(c.day_mae_model)}, table ${fmt(c.day_mae_how)}, persistence ${fmt(c.day_mae_persistence)} km/h.`),
         el("p", {}, el("b", {}, "Worst forecast: "), `made at ${String(c.worst_origin).slice(11, 16)}, predicted ${fmt(c.worst_pred, 1)}, actual ${fmt(c.worst_actual, 1)} (miss ${fmt(c.worst_abs_err, 1)} km/h).`),
         el("p", { class: "muted" }, why),
-        el("button", { class: "btn sm primary", type: "button", onclick: () => TF.openExplorer({ split: "test", seg: String(c.segment), date: String(c.day).slice(0, 10), play: true }) }, "▶ Replay this day in the explorer")));
+        el("button", { class: "btn sm primary", type: "button", onclick: () => TF.openExplorer({ split: "test", seg: String(c.segment), date: String(c.day).slice(0, 10), play: true }) }, "Replay this day in the explorer")));
     };
+    let cur = 0; const show0 = show; show = (i) => { cur = i; show0(i); }; document.addEventListener("tf-redraw", () => show(cur));
     C.forEach((c, i) => bar.append(el("button", { class: "chip", type: "button", "aria-pressed": "false", "data-i": i, onclick: () => show(i) }, `${c.case} · ${(CASE_TXT[c.case] || [c.slug])[0]}`)));
     show(0);
   }
@@ -258,6 +217,6 @@
   TF.initStory = function () {
     bindAll(); texts(); splitAndSummary(); methods(); leaderboard(); sensorMap(); cases();
   };
-  TF.initStatic = function () { stepper(); leakQuiz(); errLab(); chrome(); };
+  TF.initStatic = function () { stepper(); chrome(); };
   TF.selectSensor = selectSensor;
 })();

@@ -52,7 +52,7 @@
     summary.missing_pct = summary.missing_rate * 100;
     D.s = summary;
     if (play) {
-      D.play = { selected: play.selected, segments: play.segments.map(String), val: prep(play.val, play.segments.map(String)), test: prep(play.test, play.segments.map(String)) };
+      D.play = { dq: play.dq || null, selected: play.selected, segments: play.segments.map(String), val: prep(play.val, play.segments.map(String)), test: prep(play.test, play.segments.map(String)) };
     }
     TF.ready = true;
     return D;

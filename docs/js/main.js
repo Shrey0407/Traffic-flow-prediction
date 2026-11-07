@@ -17,6 +17,7 @@
     TF.initHero();
     TF.initLab();
     TF.initDiscoveries();
+    TF.initFigures();
     if (location.hash) { const t = document.querySelector(location.hash); if (t) t.scrollIntoView(); }
   });
 })();

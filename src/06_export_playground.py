@@ -51,6 +51,33 @@ def build_block(df: pd.DataFrame, preds: dict, segments: list) -> dict:
     return block
 
 
+def build_dq(hourly: pd.DataFrame, segments: list) -> dict:
+    """Small data-quality summaries for the figures in the Data section (all hourly rows, all eight sensors)."""
+    h = hourly.assign(seg=hourly["segment_id"].astype(str)).copy()
+    h["dow"], h["hour"] = h["timestamp"].dt.dayofweek, h["timestamp"].dt.hour
+    h["month"] = h["timestamp"].dt.to_period("M").astype(str)
+    h["day"] = h["timestamp"].dt.strftime("%Y-%m-%d")
+    h["miss"] = h["speed_kmh"].isna()
+    grid = h.pivot_table(index="dow", columns="hour", values="speed_kmh", aggfunc="mean").reindex(index=range(7), columns=range(24))
+    box = []
+    for s in segments:
+        v = h.loc[h["seg"] == s, "speed_kmh"].dropna()
+        q1, med, q3 = (float(v.quantile(q)) for q in (0.25, 0.5, 0.75))
+        iqr = q3 - q1
+        lo_fence, hi_fence = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+        box.append({"seg": s, "min": round(float(v.min()), 1), "q1": round(q1, 1), "med": round(med, 1), "q3": round(q3, 1),
+                    "max": round(float(v.max()), 1), "wl": round(float(v[v >= lo_fence].min()), 1), "wh": round(float(v[v <= hi_fence].max()), 1),
+                    "nout": int(((v < lo_fence) | (v > hi_fence)).sum()), "n": int(len(v))})
+    mm = h.pivot_table(index="seg", columns="month", values="miss", aggfunc="mean").reindex(segments)
+    dd = h.groupby("day")["miss"].mean()
+    return {
+        "dowHour": [[None if pd.isna(x) else round(float(x), 1) for x in row] for row in grid.to_numpy()],
+        "box": box,
+        "missMonths": list(mm.columns), "missBySeg": [[round(float(x), 5) for x in row] for row in mm.to_numpy()],
+        "missDays": list(dd.index), "missByDay": [round(float(x), 5) for x in dd.to_numpy()],
+    }
+
+
 def mae(y, p):
     return float(np.mean(np.abs(np.asarray(y, dtype=float) - np.asarray(p, dtype=float))))
 
@@ -94,7 +121,10 @@ def main():
     print(f"  test MAE {cfg['selected']}: {got:.3f}  (stored {fm['MAE']:.3f})")
     assert abs(got - fm["MAE"]) < 0.005, "exported test MAE does not match results/final_test_metrics.csv"
 
+    dq = build_dq(pd.read_parquet("data/processed/hourly.parquet"), segments)
+
     out = {
+        "dq": dq,
         "note": "val: all methods, models fitted on the training block only. test: selected model + baselines only, by design.",
         "base": str(BASE),
         "selected": cfg["selected"],

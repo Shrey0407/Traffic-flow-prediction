@@ -4,7 +4,10 @@
   const TF = window.TF, $ = TF.$;
   const state = { hour: 8, day: "weekday", speed: 100, profile: null };
   let canvas, ctx, W = 0, H = 0, cars = [], dashOff = 0, last = 0, visible = true, playTimer = null;
-  const LANES = 3, COLORS = ["#4cc9f0", "#ffd23f", "#ff6b35", "#c084fc", "#2ee6a6", "#ff7aa2", "#eef2ff"];
+  const LANES = 3, COLORS = ["#9a978f", "#b08d57", "#6b8e8e", "#9c6b4f", "#4f7a6b", "#3f6f8f", "#c9c3b4"];
+  let PAL = null;
+  const pal = () => PAL || (PAL = { road: TF.cssv("--road"), lane: TF.cssv("--lane"), ok: TF.cssv("--ok"), warn: TF.cssv("--warn"), jam: TF.cssv("--jam"), edge: TF.cssv("--line") });
+  new MutationObserver(() => { PAL = null; }).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   // mean actual speed by target hour for weekdays / weekends (test block, all 8 sensors)
@@ -21,7 +24,7 @@
     return p;
   }
 
-  function speedColor(v) { return v >= 95 ? "#2ee6a6" : v >= 70 ? "#ffb020" : "#ff4d6d"; }
+  function speedColor(v) { const p = pal(); return v >= 95 ? p.ok : v >= 70 ? p.warn : p.jam; }
 
   function update(animateCars) {
     const p = state.profile, v = p ? p[state.day][state.hour] : NaN;
@@ -58,18 +61,18 @@
     const speedPx = state.speed * 1.9;           // pixels per second
     dashOff = (dashOff + speedPx * dt) % 48;
     ctx.clearRect(0, 0, W, H);
-    ctx.fillStyle = "#0a0f1f"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = pal().road; ctx.fillRect(0, 0, W, H);
     const laneH = H / LANES;
-    ctx.strokeStyle = "#ffd23f"; ctx.lineWidth = 3; ctx.setLineDash([26, 22]); ctx.lineDashOffset = -dashOff;
+    ctx.strokeStyle = pal().lane; ctx.lineWidth = 3; ctx.setLineDash([26, 22]); ctx.lineDashOffset = -dashOff;
     for (let l = 1; l < LANES; l++) { ctx.beginPath(); ctx.moveTo(0, l * laneH); ctx.lineTo(W, l * laneH); ctx.stroke(); }
     ctx.setLineDash([]);
-    ctx.fillStyle = "#27325c"; ctx.fillRect(0, 0, W, 3); ctx.fillRect(0, H - 3, W, 3);
+    ctx.fillStyle = pal().edge; ctx.fillRect(0, 0, W, 3); ctx.fillRect(0, H - 3, W, 3);
     cars.forEach((c) => {
       c.x += speedPx * c.k * dt; if (c.x > W + 40) { c.x = -40; c.lane = Math.floor(Math.random() * LANES); }
       const y = c.lane * laneH + laneH / 2 - 9, x = c.x;
       ctx.fillStyle = c.c; ctx.beginPath(); ctx.roundRect ? ctx.roundRect(x - 30, y, 34, 18, 6) : ctx.rect(x - 30, y, 34, 18); ctx.fill();
       ctx.fillStyle = "rgba(0,0,0,.35)"; ctx.fillRect(x - 12, y + 3, 10, 12);          // windscreen
-      ctx.fillStyle = state.speed < 70 ? "#ff4d6d" : "#fff8c9"; ctx.fillRect(x + 1, y + 3, 3, 4); ctx.fillRect(x + 1, y + 11, 3, 4);
+      ctx.fillStyle = state.speed < 70 ? pal().jam : "#f3ecd4"; ctx.fillRect(x + 1, y + 3, 3, 4); ctx.fillRect(x + 1, y + 11, 3, 4);
     });
   }
 
@@ -80,9 +83,9 @@
     requestAnimationFrame(loop);
   }
 
-  function stopPlay() { clearInterval(playTimer); playTimer = null; $("#drive-play").textContent = "▶ Play a day"; }
+  function stopPlay() { clearInterval(playTimer); playTimer = null; $("#drive-play").textContent = "Play a day"; }
   function startPlay() {
-    $("#drive-play").textContent = "⏸ Pause";
+    $("#drive-play").textContent = "Pause";
     playTimer = setInterval(() => { state.hour = (state.hour + 1) % 24; update(true); }, 800);
   }
 

@@ -5,7 +5,7 @@
   const TF = window.TF, $ = TF.$, $$ = TF.$$, el = TF.el, svg = TF.svg, fmt = TF.fmt;
   let P = null;                                  // TF.D.play
   const blocks = () => ({ test: P.test, val: P.val });
-  const pgSegChips = {}, pgModelChips = {};
+  const pgSegChips = {};
   const PG = { split: "test", segs: new Set(), d0: 0, d1: 0, hours: new Set(), basis: "origin", dows: new Set(), hol: "all", rain: "all", period: "all", models: new Set(), metric: "mae" };
   const ALL_HOURS = [...Array(24).keys()], ALL_DOWS = [...Array(7).keys()];
   let pgSeg = {};
@@ -28,8 +28,7 @@
     PG.segs = new Set(P.segments.map((_, i) => i));
     PG.d0 = B.dayMin; PG.d1 = B.dayMax; PG.hours = new Set(ALL_HOURS); PG.dows = new Set(ALL_DOWS);
     PG.hol = "all"; PG.rain = "all"; PG.period = "all"; PG.basis = "origin";
-    const keep = [...PG.models].filter((m) => B.models.includes(m));
-    PG.models = new Set(keep.length >= 2 ? keep : B.models);
+    PG.models = new Set(B.models);
   }
   const filterObj = () => ({ segs: PG.segs.size === P.segments.length ? null : PG.segs, d0: PG.d0, d1: PG.d1, hours: PG.hours.size === 24 ? null : PG.hours, basis: PG.basis, dows: PG.dows.size === 7 ? null : PG.dows, hol: PG.hol, rain: PG.rain, period: PG.period });
 
@@ -52,8 +51,7 @@
     addEventListener("pointerup", () => { painting = null; });
     const db = $("#pg-dows");
     TF.DOW.forEach((d, i) => db.append(el("button", { type: "button", "aria-pressed": "true", "data-d": i, onclick: () => { PG.dows.has(i) ? PG.dows.delete(i) : PG.dows.add(i); renderPG(); } }, d)));
-    pgSeg.split = TF.seg($("#pg-split"), (v) => { resetPG(v); setupModelChips(); setupDateRange(); renderPG(); });
-    pgSeg.basis = TF.seg($("#pg-basis"), (v) => { PG.basis = v; renderPG(); });
+    pgSeg.split = TF.seg($("#pg-split"), (v) => { resetPG(v); setupDateRange(); renderPG(); });
     pgSeg.period = TF.seg($("#pg-period"), (v) => { PG.period = v; renderPG(); });
     pgSeg.hol = TF.seg($("#pg-hol"), (v) => { PG.hol = v; renderPG(); });
     pgSeg.rain = TF.seg($("#pg-rain"), (v) => { PG.rain = v; renderPG(); });
@@ -61,25 +59,16 @@
     $("#pg-d0").addEventListener("input", (e) => { PG.d0 = Math.min(+e.target.value, PG.d1); renderPG(); });
     $("#pg-d1").addEventListener("input", (e) => { PG.d1 = Math.max(+e.target.value, PG.d0); renderPG(); });
     $("#pg-presets").addEventListener("click", (e) => { const b = e.target.closest("[data-p]"); if (b) preset(b.dataset.p); });
-    setupModelChips(); setupDateRange();
+    setupDateRange();
   }
   function setupDateRange() {
     const B = blk();
     ["#pg-d0", "#pg-d1"].forEach((id) => { const r = $(id); r.min = B.dayMin; r.max = B.dayMax; });
   }
-  function setupModelChips() {
-    const box = $("#pg-models"); box.innerHTML = ""; Object.keys(pgModelChips).forEach((k) => delete pgModelChips[k]);
-    blk().models.forEach((m) => {
-      const c = el("button", { class: "chip", type: "button", style: `--chip: var(--c-${m})`, "aria-pressed": String(PG.models.has(m)), onclick: () => { PG.models.has(m) ? (PG.models.size > 1 && PG.models.delete(m)) : PG.models.add(m); renderPG(); } }, el("span", { class: "dot" }), TF.label(m));
-      pgModelChips[m] = c; box.append(c);
-    });
-  }
-
   // preset scenarios used by the buttons and by the Discoveries cards
   function preset(name, opts = {}) {
-    const keepModels = opts.keepModels;
-    const split = opts.split || PG.split, mods = new Set(PG.models);
-    resetPG(split); if (keepModels) PG.models = mods; setupDateRange(); setupModelChips();
+    const split = opts.split || PG.split;
+    resetPG(split); setupDateRange();
     const set = (o) => Object.assign(PG, o);
     switch (name) {
       case "rush": set({ period: "rush" }); break;
@@ -102,16 +91,15 @@
   function renderPG() {
     const B = blk(), f = filterObj(), mask = TF.mask(B, f);
     // controls reflect state
-    pgSeg.split.set(PG.split, true); pgSeg.basis.set(PG.basis, true); pgSeg.period.set(PG.period, true); pgSeg.hol.set(PG.hol, true); pgSeg.rain.set(PG.rain, true); pgSeg.metric.set(PG.metric, true);
+    pgSeg.split.set(PG.split, true); pgSeg.period.set(PG.period, true); pgSeg.hol.set(PG.hol, true); pgSeg.rain.set(PG.rain, true); pgSeg.metric.set(PG.metric, true);
     P.segments.forEach((_, i) => pgSegChips[i].setAttribute("aria-pressed", String(PG.segs.has(i))));
     $$("#pg-hours button").forEach((b) => b.setAttribute("aria-pressed", String(PG.hours.has(+b.dataset.h))));
     $$("#pg-dows button").forEach((b) => b.setAttribute("aria-pressed", String(PG.dows.has(+b.dataset.d))));
-    Object.entries(pgModelChips).forEach(([m, c]) => { c.hidden = !B.models.includes(m); c.setAttribute("aria-pressed", String(PG.models.has(m))); });
     $("#pg-d0").value = PG.d0; $("#pg-d1").value = PG.d1;
     $("#pg-dates").textContent = TF.dateOf(PG.d0).slice(5) + " → " + TF.dateOf(PG.d1).slice(5);
     $("#pg-seg-n").textContent = PG.segs.size + " of " + P.segments.length;
 
-    const models = B.models.filter((m) => PG.models.has(m));
+    const models = B.models;
     const sc = {}; models.forEach((m) => { sc[m] = TF.score(B, mask, m); });
     const per = TF.score(B, mask, "persistence"), n = per.n;
     const val = (m) => PG.metric === "mae" ? sc[m].mae : PG.metric === "rmse" ? sc[m].rmse : PG.metric === "bias" ? sc[m].bias : (per.mae > 0 ? 1 - sc[m].mae / per.mae : NaN);
@@ -122,7 +110,7 @@
     // summary
     const total = B.n, pct = ((n / total) * 100).toFixed(n / total < 0.1 ? 1 : 0);
     $("#pg-n").textContent = TF.comma(n) + " hours";
-    const sparse = n < 30 ? ["bad", "⚠ too few rows to trust"] : n < 100 ? ["warn", "⚠ small sample: treat differences with care"] : ["muted", ""];
+    const sparse = n < 30 ? ["bad", "Too few rows to trust"] : n < 100 ? ["warn", "Small sample: treat differences with care"] : ["muted", ""];
     const nd = new Set(); for (let i = 0; i < B.n; i++) if (mask[i]) nd.add(B.dayO[i]);
     $("#pg-n-note").innerHTML = `<span>${pct}% of the ${PG.split === "test" ? "test" : "validation"} block · ${nd.size} days</span> <span class="${sparse[0]}">${sparse[1]}</span>`;
 
@@ -134,7 +122,7 @@
       const v = val(m), w = Number.isNaN(v) ? 0 : (Math.abs(v) / maxv) * 100;
       const fill = el("div", { class: "fill" + (v < 0 && PG.metric !== "bias" ? " neg" : ""), "data-m": m, style: `width:${prev.get(m) || "0%"}` });
       const row = el("div", { class: "bar" + (i === 0 && n >= 1 ? " win" : "") + (m === P.selected ? " sel" : ""), style: `--mc: var(--c-${m})` },
-        el("button", { class: "name", type: "button", title: TF.MODELS[m].blurb, onclick: () => TF.focusModel(m) }, el("i"), TF.label(m), i === 0 && n > 0 ? el("span", { class: "crown" }, "👑") : null),
+        el("button", { class: "name", type: "button", title: TF.MODELS[m].blurb, onclick: () => TF.focusModel(m) }, el("i"), TF.label(m), i === 0 && n > 0 ? el("span", { class: "best" }, "lowest") : null),
         el("div", { class: "track" }, fill), el("span", { class: "v" }, PG.metric === "skill" || PG.metric === "bias" ? TF.sign(v, 2) : fmt(v, 2)));
       box.append(row);
       requestAnimationFrame(() => requestAnimationFrame(() => { fill.style.width = w + "%"; }));
@@ -144,7 +132,6 @@
     const v = $("#pg-verdict"); v.innerHTML = "";
     const unit = PG.metric === "skill" ? "" : " km/h";
     if (!n) { v.textContent = "No hours match these filters. Loosen one of them."; }
-    else if (ordered.length < 2) { v.textContent = "Select two or more methods to compare."; }
     else {
       const top = ordered[0], second = ordered[1];
       let t = `<b>${TF.label(top)}</b> leads on ${PG.metric.toUpperCase()}: ${PG.metric === "skill" || PG.metric === "bias" ? TF.sign(val(top), 3) : fmt(val(top), 3)}${unit}`;
@@ -166,7 +153,7 @@
     if (full && PG.metric === "mae") {
       const bad = [];
       ordered.forEach((m) => { const r = TF.D.m[m], ref = r ? (PG.split === "test" ? r.test_mae : r.val_mae) : null; if (ref != null && Math.abs(ref - sc[m].mae) > (PG.split === "test" ? 0.005 : 0.03)) bad.push(m); });
-      chk.innerHTML = bad.length ? `<span class="bad">⚠ ${bad.join(", ")} differ(s) from the Results table: re-run src/06_export_playground.py.</span>` : "✓ With no filters these numbers match the Results table.";
+      chk.innerHTML = bad.length ? `<span class="bad">${bad.join(", ")} differ(s) from the Results table: re-run src/06_export_playground.py.</span>` : "With no filters these numbers match the Results table.";
     } else chk.textContent = "";
   }
 
@@ -176,11 +163,11 @@
     const inTest = P.test.models.includes(m), split = inTest ? PG.split : "val";
     resetPG(split);
     const pick = (B) => [m, "voting_ensemble", "hour_of_week", "persistence"].filter((x, i, a) => a.indexOf(x) === i && B.models.includes(x));
-    PG.models = new Set(pick(blk())); setupModelChips(); setupDateRange();
+    setupDateRange();
     EX.split = split; EX.models = new Set(pick(P[split])); clampDay(); exModelChips();
     HM.split = split; HM.model = m; fillHmModels();
     renderPG(); if (scroll) TF.openTab("play");
-    TF.toast(TF.label(m) + (!inTest ? " is shown on the Validation block (it is not scored on test)" : " selected in the Lab"));
+    TF.toast(TF.label(m) + (!inTest ? " is shown on the Validation block (it is not scored on test)" : " selected"));
   };
 
   // ======================= FORECAST EXPLORER =======================
@@ -215,7 +202,7 @@
     let best = null, bv = -1; per.forEach((r, d) => { if (r[1] >= 18 && r[0] / r[1] > bv) { bv = r[0] / r[1]; best = d; } });
     if (best != null) { EX.day = best; stopPlay(); drawExplorer(); TF.toast(`Worst day for ${TF.label(m)} on this sensor: MAE ${bv.toFixed(1)} km/h`); }
   }
-  function stopPlay() { clearInterval(EX.timer); EX.timer = null; EX.shown = 24; const b = $("#ex-play"); if (b) b.textContent = "▶ Replay live"; }
+  function stopPlay() { clearInterval(EX.timer); EX.timer = null; EX.shown = 24; const b = $("#ex-play"); if (b) b.textContent = "Replay live"; }
   function startPlay() { EX.shown = 0; $("#ex-play").textContent = "⏸ Stop"; EX.timer = setInterval(() => { EX.shown++; drawExplorer(true); if (EX.shown >= 24) stopPlay(); }, 450); drawExplorer(true); }
 
   let exGeom = null;
@@ -255,7 +242,7 @@
     cells.sort((a, b) => a.mae - b.mae);
     const rain = rows.filter((i) => B.rain[i]).length, hol = rows.some((i) => B.hol[i]);
     const dow = TF.DOW[B.dowT[rows[0]]];
-    info.innerHTML = `<b>${dow} ${TF.dateOf(EX.day)}</b> · sensor ${P.segments[EX.seg]}${hol ? " · 🎗 holiday" : ""}${rain ? ` · 🌧 ${rain} rainy hours` : ""}<br>Day MAE: ` + cells.map((c) => `<span style="color:var(--c-${c.m})">●</span> ${TF.label(c.m)} <b>${fmt(c.mae, 2)}</b>`).join(" &nbsp; ") + `<br><span class="muted">Best this day: ${TF.label(cells[0].m)}.</span>`;
+    info.innerHTML = `<b>${dow} ${TF.dateOf(EX.day)}</b> · sensor ${P.segments[EX.seg]}${hol ? " · holiday" : ""}${rain ? ` · ${rain} rainy hours` : ""}<br>Day MAE: ` + cells.map((c) => `<span style="color:var(--c-${c.m})">●</span> ${TF.label(c.m)} <b>${fmt(c.mae, 2)}</b>`).join(" &nbsp; ") + `<br><span class="muted">Best this day: ${TF.label(cells[0].m)}.</span>`;
   }
   function exHover(e) {
     if (!exGeom || !exGeom.rows.length) return;
@@ -281,7 +268,6 @@
     const ms = $("#hm-seg"); ms.append(el("option", { value: "all" }, "All 8 sensors")); P.segments.forEach((s, i) => ms.append(el("option", { value: i }, "Sensor " + s)));
     TF.seg($("#hm-split"), (v) => { HM.split = v; fillHmModels(); drawHeat(); });
     TF.seg($("#hm-rain"), (v) => { HM.rain = v; drawHeat(); });
-    TF.seg($("#hm-basis"), (v) => { HM.basis = v; drawHeat(); });
     $("#hm-model").addEventListener("change", (e) => { HM.model = e.target.value; drawHeat(); });
     $("#hm-metric").addEventListener("change", (e) => { HM.metric = e.target.value; drawHeat(); });
     $("#hm-seg").addEventListener("change", (e) => { HM.seg = e.target.value; if (!HM.userMin) { HM.min = HM.seg === "all" ? 30 : 4; $("#hm-min").value = HM.min; } drawHeat(); });
@@ -330,7 +316,7 @@
         const c = cells[di][h], ok = c.n >= HM.min, v = c.n ? metricVal(c) : NaN;
         const b = el("button", { class: "hc" + (ok && !Number.isNaN(v) ? "" : " low"), type: "button", "aria-label": `${d} ${TF.hh(h)}` });
         if (ok && !Number.isNaN(v)) b.style.background = colour(v);
-        TF.tipOn(b, () => `<b>${d} ${TF.hh(h)}</b> (${HM.basis === "origin" ? "forecast made" : "forecast for"})<br>${c.n} rows${c.n < HM.min ? " <span style='color:#ffb020'>(too few: greyed)</span>" : ""}<br>` + (c.n ? `${TF.label(HM.model)} MAE <b>${fmt(c.m / c.n, 2)}</b><br>Table MAE ${fmt(c.how / c.n, 2)} · Persistence MAE ${fmt(c.per / c.n, 2)}<br>Gap to table ${TF.sign((c.m - c.how) / c.n, 2)} km/h` : ""));
+        TF.tipOn(b, () => `<b>${d} ${TF.hh(h)}</b> (${HM.basis === "origin" ? "forecast made" : "forecast for"})<br>${c.n} rows${c.n < HM.min ? " <span style='color:var(--warn)'>(too few: greyed)</span>" : ""}<br>` + (c.n ? `${TF.label(HM.model)} MAE <b>${fmt(c.m / c.n, 2)}</b><br>Table MAE ${fmt(c.how / c.n, 2)} · Persistence MAE ${fmt(c.per / c.n, 2)}<br>Gap to table ${TF.sign((c.m - c.how) / c.n, 2)} km/h` : ""));
         b.addEventListener("click", () => {
           if (!ok) { TF.toast("Too few rows in that cell. Lower “Min rows per cell” or pick all sensors."); return; }
           TF.setPlayground("reset", { split: HM.split, set: { basis: HM.basis, hours: new Set([h]), dows: new Set([di]), segs: HM.seg === "all" ? new Set(P.segments.map((_, i) => i)) : new Set([+HM.seg]), rain: HM.rain } });
@@ -343,7 +329,7 @@
     sc.innerHTML = ""; sc.append(el("span", {}, HM.metric === "mae" ? "0 km/h" : HM.metric === "gap" ? "model better" : "worse than persistence"), el("i", { style: `background:${g(stops)}` }), el("span", {}, HM.metric === "mae" ? vmax.toFixed(1) + " km/h" : HM.metric === "gap" ? "table better" : "skill 1"), el("span", { style: "margin-left:12px" }, "▨ hatched = fewer than " + HM.min + " rows"));
     $("#hm-note").textContent = HM.metric === "gap" ? "Blue cells: the model beats the hour-of-week table. Orange cells: the table wins. Click a cell to open it in the Playground." : "Hover a cell for details. Click a cell to send that weekday and hour to the Playground.";
   }
-  function fillHmSplitUi() { $$("#hm-split button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === HM.split))); $$("#hm-rain button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === HM.rain))); $$("#hm-basis button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === HM.basis))); $("#hm-seg").value = HM.seg; }
+  function fillHmSplitUi() { $$("#hm-split button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === HM.split))); $$("#hm-rain button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.v === HM.rain))); $("#hm-seg").value = HM.seg; }
 
   // ======================= GAME =======================
   const GM = { mode: "rush", round: 0, rows: [], row: null, locked: false, tally: null, rounds: 10 };
@@ -390,7 +376,7 @@
     const box = $("#gm-chart"); box.innerHTML = ""; box.append(S);
     const seg = P.segments[B.seg[i]], when = `${TF.DOW[B.dowO[i]]} ${TF.hh(B.hourO[i])}`;
     $("#gm-target").textContent = TF.hh(B.hourT[i]);
-    box.append(el("p", { class: "small", style: "margin:6px 0 0" }, `Sensor ${seg} · it is ${when}${B.rain[i] ? " · 🌧 raining" : ""}${B.hol[i] ? " · 🎗 holiday" : ""} · speed now: `, el("b", {}, B.now[i].toFixed(0) + " km/h")));
+    box.append(el("p", { class: "small", style: "margin:6px 0 0" }, `Sensor ${seg} · it is ${when}${B.rain[i] ? " · raining" : ""}${B.hol[i] ? " · holiday" : ""} · speed now: `, el("b", {}, B.now[i].toFixed(0) + " km/h")));
   }
   function drawScore() {
     const rows = PLAYERS.map(([k, name, col]) => { const t = GM.tally[k]; return `<tr><td><span style="color:var(${col})">●</span> ${name}</td><td>${t.n}</td><td>${t.n ? (t.sum / t.n).toFixed(2) : "–"}</td><td>${t.wins}</td></tr>`; });
