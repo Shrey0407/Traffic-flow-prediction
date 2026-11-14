@@ -9,7 +9,7 @@ calendar), how fast will traffic move on that segment at hour *t* + 2?
 - **Baselines to beat:** persistence and the hour-of-week mean.
 - **Data:** PEMS-BAY, Bay Area freeway detectors (Caltrans PeMS), 5-minute speeds, via the DCRNN repository.
   Weather from Open-Meteo. Holidays from the Python `holidays` package.
-- **Live site:** https://shrey0407.github.io/traffic-flow-prediction/
+- **Live site:** https://shrey0407.github.io/traffic-flow-prediction/ (report plus an interactive Lab: filter the test or validation block by sensor, date, hour, weekday, rain and holiday and compare the models)
 
 ## The honest finding
 
@@ -42,7 +42,7 @@ Values are read from `results/` and `docs/data/metrics.json` (written by `src/05
 
 Model selected on validation MAE (voting_ensemble, 2.551) on Oct 21, before any test run. On Oct 22, `04_final_test.py` and `05_export_site.py` were run once, earlier than planned, following an AI coding assistant's step. `03_train_select.py` was re-run at 11:22 and reproduced the same selection (deterministic seed). No model, feature or hyperparameter change was made after test results existed.
 
-Because the test run was not sealed, the test numbers are reported as they are and listed as a limitation.
+The test numbers are reported as they are and the order of events is listed as a limitation.
 
 ## Setup (Windows PowerShell, from the project folder)
 
@@ -75,6 +75,7 @@ python src/baselines.py            # Persistence and hour-of-week MAE (validatio
 python src/03_train_select.py      # Stage 4: tune on training folds, select on validation
 python src/04_final_test.py        # Stage 5: refit on train+val, ONE test run
 python src/05_export_site.py       # Stage 6: JSON for the website
+python src/06_export_playground.py # Stage 7: row-level predictions for the interactive Lab
 pytest src/tests                   # Leakage checks (8 tests)
 ```
 
@@ -116,4 +117,4 @@ An AI assistant (Claude) was used for planning, scaffolding, explanations and dr
 
 ## Citations
 
-Li, Y., Yu, R., Shahabi, C., Liu, Y. (2018). Diffusion Convolutional Recurrent Neural Network: Data-Driven Traffic Forecasting. ICLR 2018. Caltrans PeMS. Open-Meteo historical weather API. `holidays`, scikit-learn, XGBoost, Chart.js.
+Li, Y., Yu, R., Shahabi, C., Liu, Y. (2018). Diffusion Convolutional Recurrent Neural Network: Data-Driven Traffic Forecasting. ICLR 2018. Caltrans PeMS. Open-Meteo historical weather API. `holidays`, scikit-learn, XGBoost.
