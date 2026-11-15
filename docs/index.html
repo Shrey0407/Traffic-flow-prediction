@@ -209,6 +209,7 @@
     <li><strong>Metrics.</strong> MAE in km/h (primary: easy to read, not dominated by rare huge misses), RMSE (penalises large misses more), and skill = 1 &minus; MAE<sub>model</sub> / MAE<sub>persistence</sub>.</li>
     <li><strong>Uncertainty.</strong> A bootstrap that resamples whole days (errors in neighbouring hours are correlated) gives a 95% interval for the test MAE.</li>
   </ul>
+  <div class="note"><strong>Disclosure.</strong> The model was selected on validation MAE (voting ensemble, 2.551) on Oct 21, before any test run. On Oct 22 the final test script (<code>04_final_test.py</code>) and the site export were run once, earlier than planned. This was a shared process mistake: an AI coding assistant ran them as part of a step, and I did not stop it. <code>03_train_select.py</code> was then re-run and gave the same selection (fixed random seed). No model, feature or setting was changed after test results existed. The git commit titled "Freeze final model config ... before test run" was in fact made after that run, so its title is wrong; this note gives the correct order.</div>
 </section>
 
 <section id="results" class="reveal">
@@ -363,7 +364,8 @@
     <details class="lim"><summary>Distribution shift</summary><p>The test block is the last five weeks of the series. Patterns change with seasons, school terms and infrastructure work.</p></details>
     <details class="lim"><summary>Association, not causation</summary><p>The models find patterns that go with speed; they do not show what causes slowdowns.</p></details>
     <details class="lim"><summary>No trained model beat hour-of-week</summary><p>on validation or on test. The weekly mean is a strong baseline at this horizon.</p></details>
-    <details class="lim"><summary>Lab views are exploratory</summary><p>The Validation view in the Lab re-fits the models on the training block to show every method's forecasts. Filters slice the data many ways; with small slices, differences can be chance. The Lab warns when a slice is small or a gap is inside the noise.</p></details>
+        <details class="lim"><summary>The test run was not sealed</summary><p>The test block was scored once, earlier than planned (see the disclosure under Evaluation). Nothing was changed afterwards, but the order of events is a weakness of the process, so the test numbers should be read with that in mind.</p></details>
+<details class="lim"><summary>Lab views are exploratory</summary><p>The Validation view in the Lab re-fits the models on the training block to show every method's forecasts. Filters slice the data many ways; with small slices, differences can be chance. The Lab warns when a slice is small or a gap is inside the noise.</p></details>
   </div>
 </section>
 
