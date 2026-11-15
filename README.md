@@ -9,7 +9,7 @@ calendar), how fast will traffic move on that segment at hour *t* + 2?
 - **Baselines to beat:** persistence and the hour-of-week mean.
 - **Data:** PEMS-BAY, Bay Area freeway detectors (Caltrans PeMS), 5-minute speeds, via the DCRNN repository.
   Weather from Open-Meteo. Holidays from the Python `holidays` package.
-- **Live site:** https://shrey0407.github.io/traffic-flow-prediction/ (report plus an interactive Lab: filter the test or validation block by sensor, date, hour, weekday, rain and holiday and compare the models)
+- **Live site:** https://shrey0407.github.io/Traffic-flow-prediction/ (report plus an interactive Lab: filter the test or validation block by sensor, date, hour, weekday, rain and holiday and compare the models)
 
 ## The honest finding
 
