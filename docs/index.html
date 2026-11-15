@@ -180,6 +180,23 @@
   <p class="lede">Click a card to open it. The bar shows how flexible the method is; the number is its validation MAE (lower is better).</p>
   <div class="mgrid" id="mgrid"></div>
   <p><strong>Left out on purpose.</strong> SVR (kernel methods scale poorly with rows and need careful tuning), an MLP and an LSTM (more tuning and data than ~20,000 training rows of 16 tabular features justify, and harder to explain). The tree and linear models already cover simple-to-flexible.</p>
+  <h3 style="margin-top:28px">Settings used</h3>
+  <p>Settings were tuned on forward-chaining folds inside the training block only; validation was used to choose between models, and test was not used for any of this. All models use <code>random_state=0</code>. The full values are in <code>configs/final_model.json</code> and <code>src/models.py</code> in the repository.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Model</th><th>Settings</th></tr></thead>
+      <tbody>
+        <tr><td>Linear regression</td><td>defaults</td></tr>
+        <tr><td>Ridge</td><td>alpha 0.1</td></tr>
+        <tr><td>Lasso</td><td>alpha 0.1</td></tr>
+        <tr><td>Decision tree</td><td>max depth 8</td></tr>
+        <tr><td>Random forest</td><td>300 trees, max depth 12, min 20 rows per leaf</td></tr>
+        <tr><td>XGBoost</td><td>400 trees, max depth 6, learning rate 0.05, subsample 0.8, column sample 0.8</td></tr>
+        <tr><td>Voting ensemble</td><td>equal-weight average of random forest, XGBoost and decision tree</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Feature experiment.</strong> After the first validation run I added one feature, <code>lag_168h</code> (the speed at the same hour one week earlier), and retrained. No trained model beat the hour-of-week table on validation, and I decided to stop adding features there, so as not to keep searching on the validation block until something looked better.</p>
 </section>
 
 <section id="evaluation" class="reveal">
